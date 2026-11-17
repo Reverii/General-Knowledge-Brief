@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>General Knowledge Brief</title>
+<style>
+:root{--bg:#070b17;--glass:rgba(12,19,36,.78);--edge:rgba(0,240,255,.22);--cyan:#00f0ff;--amber:#ffaa00;--red:#ff2a55;--text:#e6f1ff;--muted:#8ea3c0;
+  --sans:Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;--mono:"JetBrains Mono",Consolas,Menlo,monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:radial-gradient(ellipse at 50% 0%,#132044 0%,var(--bg) 55%,#050811 100%);color:var(--text);font-family:var(--sans);padding:64px 20px}
+main{max-width:880px;margin:0 auto}
+.kicker{font:600 11px var(--mono);letter-spacing:.18em;color:var(--cyan)}
+h1{font-size:clamp(30px,5vw,44px);font-weight:800;letter-spacing:-.02em;margin:10px 0 10px}
+.lede{color:var(--muted);font-size:16px;line-height:1.6;max-width:620px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:40px}
+a.card{display:block;text-decoration:none;color:inherit;background:var(--glass);border:1px solid var(--edge);border-radius:14px;padding:20px;transition:border-color .2s,transform .2s,box-shadow .2s}
+a.card:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,240,255,.12)}
+.meta{display:flex;gap:8px;font:600 10.5px var(--mono);letter-spacing:.12em;margin-bottom:14px}
+.meta span{padding:3px 8px;border-radius:6px;border:1px solid var(--edge);color:var(--cyan)}
+.meta span.t{color:var(--amber);border-color:rgba(255,170,0,.35)}
+.card h2{font-size:20px;line-height:1.25;margin-bottom:8px}
+.card p{color:var(--muted);font-size:14px;line-height:1.55}
+.go{margin-top:16px;font:700 12px var(--mono);letter-spacing:.1em;color:var(--cyan)}
+footer{margin-top:48px;color:#5b6d88;font:500 11px var(--mono);letter-spacing:.08em}
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">KNOWLEDGE SHARING SESSIONS</div>
+  <h1>General Knowledge Brief</h1>
+  <p class="lede">Interactive, plain-English briefings for a general audience. Open one in Chrome or Edge, press <b>N</b> for speaker notes and use the arrow keys to move between slides.</p>
+  <div class="grid">
+    <a class="card" href="electronic-attack/">
+      <div class="meta"><span>12 SLIDES</span><span class="t">~15 MIN</span><span>3D</span></div>
+      <h2>The Invisible Battlefield: Electronic Attack (EA) Explained</h2>
+      <p>Jamming, spoofing, decoys and hard-kill weapons, with ASEAN case studies and an interactive regional capabilities map.</p>
+      <div class="go">OPEN BRIEF →</div>
+    </a>
+  </div>
+  <footer>Requires an internet connection (3D engine loads from a CDN).</footer>
+</main>
+</body>
+</html>

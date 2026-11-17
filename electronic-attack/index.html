@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Invisible Battlefield — Electronic Attack Explained</title>
+<style>
+:root{
+  --bg0:#0a0f1d; --bg1:#050811;
+  --glass:rgba(12,19,36,0.78); --edge:rgba(0,240,255,0.22);
+  --cyan:#00f0ff; --amber:#ffaa00; --red:#ff2a55; --violet:#b026ff; --green:#00e676;
+  --text:#e6f1ff; --muted:#8ea3c0; --dim:#5b6d88;
+  --sans:Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Cascadia Mono",Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#0f1730 0%,var(--bg0) 45%,var(--bg1) 100%);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+#stage{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.glass{background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid var(--edge);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.04)}
+
+/* header */
+#header{position:fixed;top:18px;left:18px;width:min(470px,calc(100vw - 400px));padding:16px 20px 18px;z-index:5;transition:opacity .35s ease,transform .35s ease}
+#header.swap{opacity:0;transform:translateY(-10px)}
+.badges{display:flex;gap:8px;align-items:center;margin-bottom:11px;font-family:var(--mono);font-size:11px;letter-spacing:.12em}
+.badge{padding:4px 9px;border-radius:6px;border:1px solid var(--edge);color:var(--cyan);background:rgba(0,240,255,.07);white-space:nowrap}
+.badge.time{color:var(--amber);border-color:rgba(255,170,0,.35);background:rgba(255,170,0,.07)}
+.badge.live{margin-left:auto;color:var(--green);border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.06)}
+.badge.live::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--green);margin-right:6px;box-shadow:0 0 8px var(--green);animation:blink 1.6s infinite;vertical-align:1px}
+@keyframes blink{50%{opacity:.25}}
+#title{font-size:clamp(21px,2.05vw,31px);font-weight:750;line-height:1.14;letter-spacing:-.015em}
+#subtitle{margin-top:8px;color:var(--muted);font-size:clamp(13px,1vw,15.5px);line-height:1.5}
+#analogy{margin-top:13px;display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:10px;background:rgba(255,170,0,.08);border:1px solid rgba(255,170,0,.28);color:#ffd88a;font-size:13.5px;line-height:1.45;font-style:italic}
+#analogy::before{content:"ANALOGY";font-style:normal;font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;color:var(--amber);padding-top:3px;flex:none}
+#analogy:empty{display:none}
+
+/* right panel */
+#panel{position:fixed;top:18px;right:18px;bottom:86px;width:350px;padding:14px;z-index:5;display:flex;flex-direction:column;gap:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(0,240,255,.25) transparent}
+.hudbox{border:1px solid rgba(0,240,255,.18);border-radius:10px;background:rgba(3,8,18,.75);padding:8px;flex:none}
+.hudtitle{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);display:flex;justify-content:space-between;margin-bottom:6px}
+.hudtitle span:last-child{color:var(--dim)}
+#hud{width:100%;aspect-ratio:312/230;display:block;border-radius:6px}
+#controls{display:flex;flex-direction:column;gap:12px}
+.sec h4{font-family:var(--mono);font-size:10px;letter-spacing:.15em;color:var(--muted);font-weight:500;margin:2px 0 8px;text-transform:uppercase}
+.btns{display:flex;flex-direction:column;gap:7px}
+.btns.row{flex-direction:row;flex-wrap:wrap}
+.btns.row .btn{flex:1 1 40%}
+.btn{--c:0,240,255;font:600 13px/1.3 var(--sans);color:var(--text);background:rgba(255,255,255,.035);border:1px solid rgba(142,163,192,.24);border-radius:9px;padding:9px 12px;text-align:left;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s,transform .1s}
+.btn:hover{border-color:rgba(var(--c),.8);background:rgba(var(--c),.08)}
+.btn:active{transform:scale(.985)}
+.btn.on{border-color:rgb(var(--c));background:rgba(var(--c),.16);box-shadow:0 0 0 1px rgba(var(--c),.25),0 0 18px rgba(var(--c),.16)}
+.btn small{display:block;font-weight:400;color:var(--muted);font-size:11.5px;margin-top:2px}
+.btn.red{--c:255,42,85}.btn.amber{--c:255,170,0}.btn.violet{--c:176,38,255}.btn.green{--c:0,230,118}
+.btn.ghost{background:transparent;color:var(--muted);font-weight:500}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.slider{padding:2px 2px 0}
+.sl-top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.sl-top b{font-family:var(--mono);color:var(--cyan);font-weight:600;font-size:11.5px}
+.sl-ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--dim);margin-top:4px;letter-spacing:.06em}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:4px;background:linear-gradient(90deg,rgba(0,240,255,.15),rgba(255,42,85,.35));outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:#e6f1ff;border:3px solid var(--cyan);box-shadow:0 0 12px rgba(0,240,255,.6);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#e6f1ff;border:3px solid var(--cyan);cursor:pointer}
+.note{font-size:12.5px;color:var(--muted);line-height:1.55;padding:9px 11px;border-left:2px solid var(--cyan);background:rgba(0,240,255,.045);border-radius:0 8px 8px 0}
+.note b{color:var(--text);font-weight:600}
+.sec>.btn{display:block;width:100%;margin-bottom:7px}
+.sec>.btn:last-child{margin-bottom:0}
+.note.red{border-color:var(--red);background:rgba(255,42,85,.06)}
+.note.amber{border-color:var(--amber);background:rgba(255,170,0,.06)}
+.note.violet{border-color:var(--violet);background:rgba(176,38,255,.07)}
+.card{border:1px solid rgba(0,240,255,.2);border-radius:10px;padding:11px 12px;background:rgba(0,240,255,.04)}
+.card .ct{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);margin-bottom:4px}
+.card h3{font-size:16px;font-weight:700;margin-bottom:2px}
+.card .tag{font-size:12.5px;color:var(--amber);margin-bottom:8px}
+.card ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.card li{font-size:12.5px;line-height:1.45;color:#c9d7ea;padding-left:14px;position:relative}
+.card li::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:2px;background:var(--cyan);box-shadow:0 0 6px var(--cyan)}
+.take ol{list-style:none;counter-reset:t;display:flex;flex-direction:column;gap:8px}
+.take li{counter-increment:t;font-size:12.8px;line-height:1.45;color:#d5e2f3;padding-left:30px;position:relative}
+.take li::before{content:counter(t);position:absolute;left:0;top:0;width:21px;height:21px;border-radius:6px;display:grid;place-items:center;font:700 11px var(--mono);color:#050811;background:var(--cyan)}
+.qa{margin-top:10px;text-align:center;padding:10px;border-radius:9px;font:700 14px var(--mono);letter-spacing:.08em;color:var(--green);border:1px dashed rgba(0,230,118,.5);background:rgba(0,230,118,.06);animation:qa 2.4s ease-in-out infinite}
+@keyframes qa{50%{box-shadow:0 0 22px rgba(0,230,118,.25)}}
+
+/* nav */
+#nav{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:8px 12px;z-index:6;max-width:calc(100vw - 24px)}
+.navbtn{font:600 12.5px var(--sans);color:var(--text);background:rgba(255,255,255,.04);border:1px solid rgba(142,163,192,.25);border-radius:8px;padding:7px 12px;cursor:pointer;white-space:nowrap;transition:all .16s}
+.navbtn:hover{border-color:var(--cyan);background:rgba(0,240,255,.1)}
+.navbtn.on{border-color:var(--amber);color:var(--amber)}
+#dots{display:flex;gap:7px;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,240,255,.55);background:transparent;cursor:pointer;position:relative;transition:all .2s;padding:0}
+.dot:hover{border-color:var(--cyan);background:rgba(0,240,255,.25)}
+.dot.done{background:rgba(0,240,255,.32)}
+.dot.cur{background:var(--cyan);box-shadow:0 0 10px var(--cyan);transform:scale(1.25)}
+.dot .tip{position:absolute;bottom:23px;left:50%;transform:translateX(-50%) translateY(4px);white-space:nowrap;font:500 11.5px var(--sans);color:var(--text);background:rgba(8,14,28,.95);border:1px solid var(--edge);border-radius:7px;padding:5px 9px;opacity:0;pointer-events:none;transition:all .15s}
+.dot .tip b{font-family:var(--mono);color:var(--cyan);margin-right:6px;font-size:10.5px}
+.dot:hover .tip{opacity:1;transform:translateX(-50%) translateY(0)}
+.sep{width:1px;height:24px;background:rgba(142,163,192,.25)}
+#timer{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px}
+#tElapsed{font-size:14px;font-weight:700;color:var(--green);min-width:46px;text-align:right}
+#tElapsed.warn{color:var(--amber)}#tElapsed.over{color:var(--red)}
+#timer .tt{color:var(--dim);font-size:10.5px;letter-spacing:.08em;white-space:nowrap}
+#timer button{width:28px;height:28px;border-radius:7px;border:1px solid rgba(142,163,192,.25);background:rgba(255,255,255,.04);color:var(--text);cursor:pointer;font-size:12px}
+#timer button:hover{border-color:var(--cyan)}
+
+/* notes */
+#notes{position:fixed;left:18px;right:386px;bottom:80px;max-height:36vh;padding:14px 20px 16px;z-index:7;overflow:auto;transform:translateY(calc(100% + 120px));opacity:0;transition:transform .38s ease,opacity .3s}
+#notes.open{transform:none;opacity:1}
+.nhead{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;color:var(--amber);margin-bottom:8px}
+.nhead .k{color:var(--dim)}
+#notesBody{font-size:15px;line-height:1.65;color:#dbe6f5}
+#notesBody p{margin-bottom:8px}
+#notesBody .cue{font-family:var(--mono);font-size:11.5px;color:var(--amber);background:rgba(255,170,0,.1);padding:1px 6px;border-radius:4px;margin-right:4px}
+#notesBody .act{color:var(--cyan);font-style:italic}
+
+#hint{position:fixed;left:20px;bottom:24px;font-family:var(--mono);font-size:10.5px;color:var(--dim);letter-spacing:.06em;z-index:4;pointer-events:none}
+#err{position:fixed;inset:0;display:none;align-items:center;justify-content:center;text-align:center;padding:40px;z-index:20;background:#050811;color:var(--text);font-size:16px;line-height:1.6}
+@media (max-width:1400px){#hint{display:none}}
+@media (min-width:1800px) and (min-height:1000px){#header,#panel,#nav,#notes{zoom:1.25}#panel{bottom:76px}#notes{right:374px}}
+@media (max-height:780px){
+  #header{padding:12px 16px 14px}
+  #title{font-size:21px}
+  #subtitle{font-size:13px;margin-top:6px}
+  #analogy{margin-top:9px;font-size:12.5px;padding:7px 10px}
+  #panel{padding:11px;gap:10px;width:330px}
+  .btn{padding:7px 11px;font-size:12.5px}
+  .btn small{font-size:11px}
+  .note{font-size:12px;padding:7px 10px}
+  #notes{right:362px}
+}
+</style>
+</head>
+<body>
+<canvas id="stage" tabindex="0"></canvas>
+
+<header id="header" class="glass">
+  <div class="badges"><span class="badge" id="slideBadge">SLIDE 01 / 12</span><span class="badge time" id="timeBadge">~1:00</span><span class="badge live">LIVE 3D</span></div>
+  <h1 id="title">The Invisible Battlefield</h1>
+  <p id="subtitle"></p>
+  <div id="analogy"></div>
+</header>
+
+<aside id="panel" class="glass">
+  <div class="hudbox">
+    <div class="hudtitle"><span id="hudTitle">HUD</span><span>SIMULATED</span></div>
+    <canvas id="hud" width="624" height="460"></canvas>
+  </div>
+  <div id="controls"></div>
+</aside>
+
+<section id="notes" class="glass" aria-label="Speaker notes">
+  <div class="nhead"><span>SPEAKER NOTES · <b id="notesSlide"></b></span><span class="k">PRESS N TO CLOSE</span></div>
+  <div id="notesBody"></div>
+</section>
+
+<nav id="nav" class="glass">
+  <button class="navbtn" id="prev" title="Previous (←)">◀ Prev</button>
+  <div id="dots"></div>
+  <button class="navbtn" id="next" title="Next (→ / Space)">Next ▶</button>
+  <div class="sep"></div>
+  <div id="timer">
+    <span id="tElapsed">00:00</span><span class="tt">/ 15:00 TARGET</span>
+    <button id="tPlay" title="Start / pause timer">▶</button>
+    <button id="tReset" title="Reset timer">↺</button>
+  </div>
+  <div class="sep"></div>
+  <button class="navbtn" id="notesBtn" title="Toggle speaker notes (N)">Notes</button>
+</nav>
+<div id="hint">DRAG TO ORBIT · SCROLL TO ZOOM · ←/→ SPACE TO NAVIGATE · N FOR NOTES</div>
+<div id="err"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+if(!window.THREE){
+  const e=document.getElementById('err');e.style.display='flex';
+  e.innerHTML='<div><h2 style="color:#ff2a55;margin-bottom:10px">3D engine could not load</h2>This presentation loads Three.js from a CDN.<br>Please connect to the internet and refresh the page.</div>';
+  return;
+}
+/* ============================================================
+   CORE HELPERS
+   ============================================================ */
+const PI=Math.PI, TAU=PI*2;
+const COL={cyan:0x00f0ff,amber:0xffaa00,red:0xff2a55,violet:0xb026ff,green:0x00e676,white:0xffffff};
+const HEX={cyan:'#00f0ff',amber:'#ffaa00',red:'#ff2a55',violet:'#b026ff',green:'#00e676',text:'#e6f1ff',muted:'#8ea3c0',dim:'#5b6d88'};
+const MONO='"JetBrains Mono",Consolas,"Cascadia Mono",Menlo,monospace';
+const SANS='Inter,"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif';
+const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+const rand=(a=0,b=1)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const damp=(a,b,rate,dt)=>lerp(a,b,1-Math.exp(-rate*dt));
+
+/* ---------- renderer / scene ---------- */
+const canvas=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(2,window.devicePixelRatio||1));
+renderer.setSize(innerWidth,innerHeight,false);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.setClearColor(0x070b17,1);
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x070b17,0.014);
+const camera=new THREE.PerspectiveCamera(48,innerWidth/innerHeight,0.1,700);
+camera.position.set(24,15,30);
+let controls;
+if(THREE.OrbitControls){
+  controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true;controls.dampingFactor=0.08;
+  controls.minDistance=2;controls.maxDistance=150;controls.maxPolarAngle=PI*0.49;
+}else{
+  controls={target:V(),update(){camera.lookAt(this.target);},addEventListener(){}};
+}
+scene.add(new THREE.HemisphereLight(0xa8c8ff,0x0a0f1d,0.8));
+const sun=new THREE.DirectionalLight(0xffffff,0.95);sun.position.set(20,40,18);scene.add(sun);
+const rim=new THREE.DirectionalLight(0x5ff6ff,0.4);rim.position.set(-25,14,-22);scene.add(rim);
+scene.add(new THREE.AmbientLight(0x22304a,0.35));
+/* starfield */
+(function(){
+  const n=1800,p=new Float32Array(n*3);
+  for(let i=0;i<n;i++){const r=rand(220,320),th=rand(0,TAU),ph=Math.acos(rand(-0.1,1));
+    p[i*3]=r*Math.sin(ph)*Math.cos(th);p[i*3+1]=r*Math.cos(ph);p[i*3+2]=r*Math.sin(ph)*Math.sin(th);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const s=new THREE.Points(g,new THREE.PointsMaterial({color:0xa9c1ff,size:1.3,sizeAttenuation:false,transparent:true,opacity:.75,fog:false}));
+  s.name='stars';scene.add(s);
+})();
+
+/* ---------- materials / mesh helpers ---------- */
+function std(color,o={}){return new THREE.MeshStandardMaterial(Object.assign({color,metalness:.45,roughness:.5},o));}
+function glow(color,opacity=.6,o={}){return new THREE.MeshBasicMaterial(Object.assign({color,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false},o));}
+function M(geo,mat,x=0,y=0,z=0){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);return m;}
+function disposeTree(o){
+  o.traverse(n=>{
+    if(n.geometry)n.geometry.dispose();
+    if(n.material){(Array.isArray(n.material)?n.material:[n.material]).forEach(m=>{if(m.map&&m.map!==DOT)m.map.dispose();m.dispose();});}
+  });
+}
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+/* text label sprite */
+function label(text,color=HEX.cyan,size=1){
+  const c=document.createElement('canvas');let g=c.getContext('2d');const fs=46,font=`700 ${fs}px ${SANS}`;
+  g.font=font;const w=Math.ceil(g.measureText(text).width)+50;c.width=w;c.height=80;g=c.getContext('2d');
+  g.font=font;g.fillStyle='rgba(8,14,28,.85)';rr(g,3,3,w-6,74,16);g.fill();g.strokeStyle=color;g.lineWidth=3;g.stroke();
+  g.fillStyle=color;g.textBaseline='middle';g.fillText(text,25,42);
+  const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=4;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false,fog:false}));
+  s.scale.set(w/80*size,size,1);s.renderOrder=10;return s;
+}
+/* soft glow sprite */
+function glowSprite(color,size=1,opacity=1){
+  const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.22,'rgba(255,255,255,.65)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,64,64);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),color,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+  s.scale.setScalar(size);return s;
+}
+/* soft round texture for particles */
+const DOT=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');const gr=g.createRadialGradient(32,32,0,32,32,32);
+  gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.35,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+/* beam from a to b (cylinder 0..1 along +z) */
+function makeBeam(color,r=.05,opacity=.8){
+  const geo=new THREE.CylinderGeometry(r,r,1,10,1,true);geo.rotateX(PI/2);geo.translate(0,0,.5);
+  const m=new THREE.Mesh(geo,glow(color,opacity));
+  m.userData.set=(a,b)=>{m.position.copy(a);m.lookAt(b);m.scale.z=Math.max(.001,a.distanceTo(b));};
+  return m;
+}
+/* cone: apex at origin, opening toward +z, radius 1 & length 1 (scale it) */
+function makeCone(color,opacity=.15,seg=40){
+  const geo=new THREE.ConeGeometry(1,1,seg,1,true);geo.translate(0,-.5,0);geo.rotateX(-PI/2);
+  return new THREE.Mesh(geo,glow(color,opacity));
+}
+/* place object along parametric path, facing travel direction */
+function along(obj,f,t){const p=f(t),q=f(t+.05);obj.position.copy(p);obj.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);}
+
+/* ---------- FX manager: rings, shells, bursts ---------- */
+class FX{
+  constructor(p){this.p=p;this.items=[];this.rg=new THREE.RingGeometry(.9,1,64);this.sg=new THREE.SphereGeometry(1,28,16);}
+  add(obj,life,fn){this.p.add(obj);const it={obj,life,age:0,fn};this.items.push(it);fn(0,0);return obj;}
+  ring(o){
+    const op=o.opacity==null?.8:o.opacity,m=glow(o.color,op),r=new THREE.Mesh(this.rg,m);r.position.copy(o.pos);
+    if(o.normal)r.lookAt(r.position.clone().add(o.normal));else r.rotation.x=-PI/2;
+    const r0=o.r0==null?.1:o.r0,maxR=o.maxR||5,vel=o.vel||null;
+    return this.add(r,o.life||2,(k,dt)=>{r.scale.setScalar(r0+(maxR-r0)*k);m.opacity=op*(1-k)*Math.min(1,k*8+.2);
+      if(vel)r.position.addScaledVector(vel,dt);if(o.tick)o.tick(r,k,m);});
+  }
+  shell(o){
+    const op=o.opacity==null?.4:o.opacity,m=glow(o.color,op);if(o.wire)m.wireframe=true;
+    const s=new THREE.Mesh(this.sg,m);s.position.copy(o.pos);const maxR=o.maxR||5;
+    return this.add(s,o.life||1.4,k=>{s.scale.setScalar(.1+maxR*k);m.opacity=op*(1-k);});
+  }
+  burst(o){
+    const n=o.n||40,pos=new Float32Array(n*3),vel=[];
+    for(let i=0;i<n;i++){pos[i*3]=o.pos.x;pos[i*3+1]=o.pos.y;pos[i*3+2]=o.pos.z;
+      vel.push(V(rand(-1,1),rand(-1,1)+(o.up||0),rand(-1,1)).normalize().multiplyScalar((o.speed||5)*rand(.25,1)));}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const m=new THREE.PointsMaterial({map:DOT,color:o.color,size:(o.size||.25)*1.6,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false});
+    const pts=new THREE.Points(geo,m);pts.frustumCulled=false;pts.userData.ownGeo=true;
+    const grav=o.gravity==null?6:o.gravity,d=o.drift||V();
+    return this.add(pts,o.life||1.2,(k,dt)=>{for(let i=0;i<n;i++){const v=vel[i];v.y-=grav*dt;
+      pos[i*3]+=(v.x+d.x)*dt;pos[i*3+1]+=(v.y+d.y)*dt;pos[i*3+2]+=(v.z+d.z)*dt;}
+      geo.attributes.position.needsUpdate=true;m.opacity=1-k*k;});
+  }
+  update(dt){for(let i=this.items.length-1;i>=0;i--){const it=this.items[i];it.age+=dt;const k=it.age/it.life;if(k>=1){this.kill(i);continue;}it.fn(k,dt);}}
+  kill(i){const it=this.items[i];this.p.remove(it.obj);it.obj.material.dispose();if(it.obj.userData.ownGeo)it.obj.geometry.dispose();this.items.splice(i,1);}
+  reset(){while(this.items.length)this.kill(this.items.length-1);}
+  destroy(){this.reset();this.rg.dispose();this.sg.dispose();}
+}
+/* packets travelling along a line */
+class Packets{
+  constructor(parent,color,n=6,size=.12){this.g=new THREE.Group();parent.add(this.g);this.items=[];this.n=n;
+    const geo=new THREE.SphereGeometry(size,10,8),mat=glow(color,.95);
+    for(let i=0;i<n;i++){const m=new THREE.Mesh(geo,mat);this.g.add(m);this.items.push(m);}}
+  update(a,b,t,speed=.5,arc=0){for(let i=0;i<this.n;i++){const k=((t*speed)+i/this.n)%1,m=this.items[i];m.position.lerpVectors(a,b,k);if(arc)m.position.y+=Math.sin(k*PI)*arc;}}
+  set visible(v){this.g.visible=v;}
+  get visible(){return this.g.visible;}
+}
+/* particle trail (smoke / sparks) */
+class Trail{
+  constructor(parent,n,color,size,life=1.4){this.n=n;this.life=life;this.i=0;this.base=new THREE.Color(color);
+    this.pos=new Float32Array(n*3);this.col=new Float32Array(n*3);this.age=new Float32Array(n).fill(99);
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(this.pos,3));geo.setAttribute('color',new THREE.BufferAttribute(this.col,3));
+    this.pts=new THREE.Points(geo,new THREE.PointsMaterial({map:DOT,size:size*1.6,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+    this.pts.frustumCulled=false;parent.add(this.pts);}
+  emit(p,j=0){const i=this.i;this.pos[i*3]=p.x+rand(-j,j);this.pos[i*3+1]=p.y+rand(-j,j);this.pos[i*3+2]=p.z+rand(-j,j);this.age[i]=0;this.i=(i+1)%this.n;}
+  update(dt,drift){for(let i=0;i<this.n;i++){if(this.age[i]<this.life){this.age[i]+=dt;if(drift){this.pos[i*3]+=drift.x*dt;this.pos[i*3+1]+=drift.y*dt;this.pos[i*3+2]+=drift.z*dt;}
+      const f=Math.max(0,1-this.age[i]/this.life);this.col[i*3]=this.base.r*f;this.col[i*3+1]=this.base.g*f;this.col[i*3+2]=this.base.b*f;}
+      else{this.col[i*3]=this.col[i*3+1]=this.col[i*3+2]=0;}}
+    this.pts.geometry.attributes.position.needsUpdate=true;this.pts.geometry.attributes.color.needsUpdate=true;}
+  reset(){this.age.fill(99);}
+}
+/* char / restore a model (hard-kill look) */
+function setCharred(obj,on){
+  obj.traverse(n=>{const m=n.material;if(!m)return;
+    if(m.isMeshStandardMaterial){if(m.userData.oc==null){m.userData.oc=m.color.getHex();m.userData.oe=m.emissive.getHex();}
+      m.color.setHex(on?0x1c1c1e:m.userData.oc);m.emissive.setHex(on?0x000000:m.userData.oe);}
+    else if(m.isMeshBasicMaterial){if(m.userData.ov==null)m.userData.ov=n.visible;n.visible=on?false:m.userData.ov;}
+  });
+}
+
+/* ============================================================
+   PROCEDURAL MODELS
+   ============================================================ */
+function makeJet(o={}){
+  const g=new THREE.Group();g.rotation.order='YXZ';
+  const body=std(o.color||0x7d8ea4,{metalness:.65,roughness:.32});
+  const dark=std(0x252c38,{metalness:.5,roughness:.5});
+  const glass=new THREE.MeshStandardMaterial({color:0x0b3a5a,metalness:.9,roughness:.08,emissive:0x0a5a7a,emissiveIntensity:.55});
+  const f=M(new THREE.CylinderGeometry(.3,.42,4.2,16),body);f.rotation.x=PI/2;g.add(f);
+  const nose=M(new THREE.ConeGeometry(.3,1.7,16),body,0,0,2.95);nose.rotation.x=PI/2;g.add(nose);
+  const can=M(new THREE.SphereGeometry(.27,16,10,0,TAU,0,PI/2),glass,0,.2,1.25);can.scale.set(1,.85,2.6);g.add(can);
+  const wm=body.clone();wm.side=THREE.DoubleSide;
+  const ws=new THREE.Shape();ws.moveTo(.25,1.1);ws.lineTo(2.7,-1.3);ws.lineTo(2.7,-1.75);ws.lineTo(.25,-1.95);ws.lineTo(.25,1.1);
+  const wg=new THREE.ExtrudeGeometry(ws,{depth:.07,bevelEnabled:false});
+  [1,-1].forEach(s=>{const w=M(wg,wm);w.rotation.x=PI/2;w.scale.x=s;g.add(w);});
+  const ts=new THREE.Shape();ts.moveTo(0,0);ts.lineTo(1.15,0);ts.lineTo(.55,1.05);ts.lineTo(.15,1.05);ts.lineTo(0,0);
+  const tg=new THREE.ExtrudeGeometry(ts,{depth:.05,bevelEnabled:false});
+  [1,-1].forEach(s=>{const p=new THREE.Group();p.position.set(s*.3,.15,-2.45);p.rotation.z=-s*.38;const t=M(tg,wm);t.rotation.y=-PI/2;p.add(t);g.add(p);});
+  const hs=new THREE.Shape();hs.moveTo(.3,0);hs.lineTo(1.25,-.55);hs.lineTo(1.25,-.85);hs.lineTo(.3,-.8);hs.lineTo(.3,0);
+  const hg=new THREE.ExtrudeGeometry(hs,{depth:.05,bevelEnabled:false});
+  [1,-1].forEach(s=>{const h=M(hg,wm,0,-.02,-1.75);h.rotation.x=PI/2;h.scale.x=s;g.add(h);});
+  g.userData.flames=[];
+  [-.17,.17].forEach(x=>{const n=M(new THREE.CylinderGeometry(.16,.19,.4,12),dark,x,0,-2.2);n.rotation.x=PI/2;g.add(n);
+    const fl=M(new THREE.ConeGeometry(.15,1.1,12,1,true),glow(0xff8a2a,.85),x,0,-2.95);fl.rotation.x=-PI/2;g.add(fl);g.userData.flames.push(fl);
+    const core=M(new THREE.ConeGeometry(.08,.6,10,1,true),glow(0xfff1c0,.9),x,0,-2.7);core.rotation.x=-PI/2;g.add(core);});
+  g.add(M(new THREE.SphereGeometry(.06,8,6),new THREE.MeshBasicMaterial({color:0xff2a2a}),2.7,-.04,-1.5));
+  g.add(M(new THREE.SphereGeometry(.06,8,6),new THREE.MeshBasicMaterial({color:0x2aff6a}),-2.7,-.04,-1.5));
+  g.userData.update=t=>{g.userData.flames.forEach((f,i)=>{const s=.85+Math.sin(t*40+i*2)*.12+Math.random()*.08;f.scale.set(1,s,1);});};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeShip(o={}){
+  const g=new THREE.Group();
+  const hullM=std(o.hull||0x4a5566,{metalness:.4,roughness:.55}),supM=std(o.sup||0x8a96a8,{metalness:.35,roughness:.5}),deckM=std(0x2e3642,{roughness:.85,metalness:.1});
+  const hs=new THREE.Shape();hs.moveTo(-.7,2.6);hs.lineTo(.7,2.6);hs.lineTo(.8,-1.2);hs.quadraticCurveTo(.62,-2.6,0,-3.45);hs.quadraticCurveTo(-.62,-2.6,-.8,-1.2);hs.lineTo(-.7,2.6);
+  const hull=M(new THREE.ExtrudeGeometry(hs,{depth:.75,bevelEnabled:true,bevelThickness:.04,bevelSize:.05,bevelSegments:1}),hullM,0,-.3,0);hull.rotation.x=-PI/2;g.add(hull);
+  const deck=M(new THREE.BoxGeometry(1.45,.04,4.6),deckM,0,.5,-.15);g.add(deck);
+  if(o.stripe){const st=M(new THREE.BoxGeometry(.02,.22,.9),std(o.stripe,{emissive:o.stripe,emissiveIntensity:.25}),.81,.2,1.6);st.rotation.y=.12;g.add(st);
+    const st2=st.clone();st2.position.x=-.81;st2.rotation.y=-.12;g.add(st2);}
+  const s1=M(new THREE.BoxGeometry(1.15,.75,1.9),supM,0,.88,-.35);g.add(s1);
+  const s2=M(new THREE.BoxGeometry(.95,.5,.9),supM,0,1.5,0);g.add(s2);
+  g.add(M(new THREE.BoxGeometry(.96,.1,.05),new THREE.MeshBasicMaterial({color:0x7fe8ff}),0,1.58,.46));
+  g.add(M(new THREE.CylinderGeometry(.06,.1,1.3,8),supM,0,2.35,-.25));
+  const radar=new THREE.Group();radar.position.set(0,3.02,-.25);g.add(radar);
+  radar.add(M(new THREE.BoxGeometry(1,.09,.12),std(0xd8dee6,{metalness:.6})));
+  const tur=M(new THREE.CylinderGeometry(.25,.3,.25,12),supM,0,.62,1.8);g.add(tur);
+  const bar=M(new THREE.CylinderGeometry(.04,.04,.8,8),supM,0,.68,2.2);bar.rotation.x=PI/2;g.add(bar);
+  const pad=M(new THREE.CircleGeometry(.5,24),glow(0xffffff,.18),0,.53,-1.9);pad.rotation.x=-PI/2;g.add(pad);
+  const wakeGeo=new THREE.PlaneGeometry(1.6,7);wakeGeo.translate(0,-3.5,0);
+  const wake=M(wakeGeo,glow(0xbfefff,.16),0,.03,-2.55);wake.rotation.x=-PI/2;wake.scale.y=-1;g.add(wake);
+  const foam=M(new THREE.RingGeometry(.6,.95,24,1,PI*.15,PI*.7),glow(0xffffff,.22),0,.04,2.9);foam.rotation.x=-PI/2;g.add(foam);
+  g.userData={radar,wake,update(t){radar.rotation.y=t*2.2;wake.material.opacity=.12+Math.sin(t*3)*.04;}};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeDrone(o={}){
+  const g=new THREE.Group();const bm=std(o.color||0x2b3442,{metalness:.5,roughness:.4}),am=std(0x1a1f29,{roughness:.6});
+  g.add(M(new THREE.BoxGeometry(.7,.22,.7),bm));
+  g.add(M(new THREE.SphereGeometry(.27,14,8,0,TAU,0,PI/2),std(0x121a26,{metalness:.8,roughness:.2}),0,.1,0));
+  const rotors=[];
+  for(let i=0;i<4;i++){const a=PI/4+i*PI/2;const arm=M(new THREE.BoxGeometry(1.25,.08,.12),am,Math.cos(a)*.62,0,Math.sin(a)*.62);arm.rotation.y=-a;g.add(arm);
+    const mx=Math.cos(a)*1.22,mz=Math.sin(a)*1.22;
+    g.add(M(new THREE.CylinderGeometry(.09,.09,.16,10),am,mx,.08,mz));
+    const disc=M(new THREE.CircleGeometry(.5,28),glow(0xa8dcff,.14),mx,.19,mz);disc.rotation.x=-PI/2;g.add(disc);
+    const bl=M(new THREE.BoxGeometry(.95,.015,.07),std(0x0e1218),mx,.2,mz);g.add(bl);rotors.push(bl);}
+  if(o.payload)g.add(M(new THREE.BoxGeometry(.3,.25,.4),std(0x5a4a2a,{roughness:.8}),0,-.24,0));
+  const led=M(new THREE.SphereGeometry(.075,10,8),new THREE.MeshBasicMaterial({color:o.led||COL.cyan}),0,-.03,.37);g.add(led);
+  g.add(M(new THREE.SphereGeometry(.1,10,8),std(0x05070a,{metalness:.9,roughness:.2}),0,-.17,.15));
+  g.userData={rotors,led,spin:1,update(dt){rotors.forEach((r,i)=>r.rotation.y+=dt*45*g.userData.spin*(i%2?1:-1));}};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeDish(r=1.3,cap=.62,mat){
+  const d=M(new THREE.SphereGeometry(r,24,10,0,TAU,0,cap),mat);d.material.side=THREE.DoubleSide;d.rotation.x=-PI/2;d.position.z=r*.96;return d;
+}
+function makeRadar(o={}){
+  const g=new THREE.Group();const cm=std(0x56606e,{roughness:.85,metalness:.15}),mm=std(0xc0c9d4,{metalness:.6,roughness:.33});
+  g.add(M(new THREE.BoxGeometry(2.3,.6,2.3),cm,0,.3,0));
+  g.add(M(new THREE.BoxGeometry(2.42,.08,2.42),std(0x2b313b),0,.62,0));
+  g.add(M(new THREE.CylinderGeometry(.25,.36,1.2,12),mm,0,1.2,0));
+  const spin=new THREE.Group();spin.position.y=1.85;g.add(spin);
+  spin.add(M(new THREE.BoxGeometry(.6,.35,.5),cm));
+  const tilt=new THREE.Group();tilt.rotation.x=-.28;spin.add(tilt);
+  tilt.add(makeDish(1.3,.62,mm.clone()));
+  const feed=M(new THREE.CylinderGeometry(.03,.03,.85,6),mm,0,0,.5);feed.rotation.x=PI/2;tilt.add(feed);
+  const tip=M(new THREE.SphereGeometry(.08,10,8),new THREE.MeshBasicMaterial({color:COL.green}),0,0,.95);tilt.add(tip);
+  const cone=makeCone(o.coneColor||COL.green,.09);cone.scale.set(o.coneR||4,o.coneR||4,o.coneL||22);tilt.add(cone);
+  const beacon=M(new THREE.SphereGeometry(.09,8,6),new THREE.MeshBasicMaterial({color:COL.red}),1.05,.75,1.05);g.add(beacon);
+  g.userData={spin,tilt,cone,tip,beacon,dishWorld(){return tip.getWorldPosition(V());}};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeSatellite(o={}){
+  const g=new THREE.Group();
+  const gold=std(0xd4a017,{metalness:.95,roughness:.28,emissive:0x3a2600,emissiveIntensity:.6});
+  g.add(M(new THREE.CylinderGeometry(.75,.75,1.4,8),gold));
+  g.add(M(new THREE.CylinderGeometry(.6,.75,.25,8),std(0xb9c2cc,{metalness:.8,roughness:.3}),0,.82,0));
+  const pm=std(0x1d3f8f,{metalness:.7,roughness:.25,emissive:0x0b2160,emissiveIntensity:.7}),fr=std(0xaab4c0,{metalness:.8,roughness:.3});
+  [1,-1].forEach(s=>{const arm=M(new THREE.CylinderGeometry(.05,.05,.9,6),fr,s*1.15,0,0);arm.rotation.z=PI/2;g.add(arm);
+    const p=M(new THREE.BoxGeometry(2.7,.05,1.15),pm,s*2.95,0,0);g.add(p);
+    for(let k=-1;k<=1;k++)g.add(M(new THREE.BoxGeometry(.03,.07,1.17),fr,s*2.95+k*.9,0,0));});
+  const ant=M(new THREE.ConeGeometry(.45,.3,16,1,true),fr,0,-.9,0);ant.material=fr.clone();ant.material.side=THREE.DoubleSide;g.add(ant);
+  g.add(M(new THREE.CylinderGeometry(.03,.03,.5,6),fr,0,-1.15,0));
+  const led=glowSprite(COL.amber,1.4,.8);led.position.y=-1.4;g.add(led);
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeTruck(o={}){
+  const g=new THREE.Group();const body=std(o.color||0x4d5a3f,{roughness:.72,metalness:.2}),dark=std(0x15181d,{roughness:.9,metalness:.1});
+  g.add(M(new THREE.BoxGeometry(1.6,.45,4.6),dark,0,.72,0));
+  g.add(M(new THREE.BoxGeometry(1.75,1.1,1.3),body,0,1.48,1.65));
+  g.add(M(new THREE.BoxGeometry(1.55,.45,.05),new THREE.MeshStandardMaterial({color:0x0b3a5a,metalness:.9,roughness:.1,emissive:0x0a4a6a,emissiveIntensity:.4}),0,1.7,2.31));
+  g.add(M(new THREE.BoxGeometry(1.75,1.35,2.85),body,0,1.6,-.7));
+  const wg=new THREE.CylinderGeometry(.42,.42,.32,16);
+  [1.55,-.2,-1.45].forEach(z=>[1,-1].forEach(s=>{const w=M(wg,dark,s*.86,.42,z);w.rotation.z=PI/2;g.add(w);}));
+  g.add(M(new THREE.CylinderGeometry(.08,.1,1.5,8),std(0x9aa3ad,{metalness:.7}),0,3,-1.2));
+  const em=new THREE.Group();em.position.set(0,3.75,-1.2);g.add(em);
+  const dm=std(0xc9d1da,{metalness:.6,roughness:.35});
+  em.add(M(new THREE.BoxGeometry(.5,.3,.4),body));
+  const dish=makeDish(.85,.75,dm);em.add(dish);
+  const horn=M(new THREE.CylinderGeometry(.03,.03,.6,6),dm,0,0,.4);horn.rotation.x=PI/2;em.add(horn);
+  const tip=M(new THREE.SphereGeometry(.1,10,8),new THREE.MeshBasicMaterial({color:o.tip||COL.red}),0,0,.72);em.add(tip);
+  const tg=glowSprite(o.tip||COL.red,1.1,.7);tg.position.z=.72;em.add(tg);
+  g.userData={emitter:em,tip,tipGlow:tg,tipWorld(){return tip.getWorldPosition(V());}};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeMissile(o={}){
+  const g=new THREE.Group();const m=std(o.color||0xe8edf2,{metalness:.3,roughness:.4});
+  const b=M(new THREE.CylinderGeometry(.13,.13,2,12),m);b.rotation.x=PI/2;g.add(b);
+  const n=M(new THREE.ConeGeometry(.13,.55,12),std(o.nose||0x3a3f47),0,0,1.27);n.rotation.x=PI/2;g.add(n);
+  for(let i=0;i<4;i++){const p=new THREE.Group();p.rotation.z=i*PI/2;const f=M(new THREE.BoxGeometry(.03,.36,.42),m,0,.22,-.78);p.add(f);g.add(p);}
+  for(let i=0;i<4;i++){const p=new THREE.Group();p.rotation.z=i*PI/2+PI/4;const f=M(new THREE.BoxGeometry(.02,.18,.25),m,0,.18,.6);p.add(f);g.add(p);}
+  const fl=M(new THREE.ConeGeometry(.11,.8,10,1,true),glow(0xffb347,.9),0,0,-1.4);fl.rotation.x=-PI/2;g.add(fl);
+  const fg=glowSprite(0xffa040,1.1,.9);fg.position.z=-1.1;g.add(fg);
+  g.userData={flame:fl,update(t){fl.scale.y=.8+Math.random()*.4;}};
+  if(o.scale)g.scale.setScalar(o.scale);
+  return g;
+}
+function makeAirliner(){
+  const g=new THREE.Group();const w=std(0xf2f4f7,{metalness:.3,roughness:.4}),b=std(0x1e5aa8,{metalness:.3,roughness:.4}),gr=std(0x9aa3ad,{metalness:.6});
+  const f=M(new THREE.CylinderGeometry(.6,.6,7,18),w);f.rotation.x=PI/2;g.add(f);
+  const nose=M(new THREE.SphereGeometry(.6,18,12),w,0,0,3.5);nose.scale.z=1.6;g.add(nose);
+  const tail=M(new THREE.ConeGeometry(.6,1.8,18),w,0,.1,-4.4);tail.rotation.x=-PI/2;g.add(tail);
+  g.add(M(new THREE.BoxGeometry(.02,.18,5.6),new THREE.MeshBasicMaterial({color:0x223355}),.6,.18,.2));
+  g.add(M(new THREE.BoxGeometry(.02,.18,5.6),new THREE.MeshBasicMaterial({color:0x223355}),-.6,.18,.2));
+  const wm=w.clone();wm.side=THREE.DoubleSide;
+  const ws=new THREE.Shape();ws.moveTo(.4,.9);ws.lineTo(5.2,-1.6);ws.lineTo(5.2,-2.1);ws.lineTo(.4,-1.1);ws.lineTo(.4,.9);
+  const wg=new THREE.ExtrudeGeometry(ws,{depth:.1,bevelEnabled:false});
+  [1,-1].forEach(s=>{const x=M(wg,wm,0,-.25,0);x.rotation.x=PI/2;x.scale.x=s;g.add(x);
+    const e=M(new THREE.CylinderGeometry(.32,.28,1.2,14),gr,s*1.9,-.62,.05);e.rotation.x=PI/2;g.add(e);});
+  const fs=new THREE.Shape();fs.moveTo(0,0);fs.lineTo(1.8,0);fs.lineTo(.9,2);fs.lineTo(.3,2);fs.lineTo(0,0);
+  const fin=M(new THREE.ExtrudeGeometry(fs,{depth:.08,bevelEnabled:false}),b,.04,.3,-5.1);fin.rotation.y=-PI/2;g.add(fin);
+  const hs=new THREE.Shape();hs.moveTo(.2,0);hs.lineTo(2,-.7);hs.lineTo(2,-1);hs.lineTo(.2,-.9);hs.lineTo(.2,0);
+  const hg=new THREE.ExtrudeGeometry(hs,{depth:.06,bevelEnabled:false});
+  [1,-1].forEach(s=>{const x=M(hg,wm,0,.2,-4.2);x.rotation.x=PI/2;x.scale.x=s;g.add(x);});
+  [[0,-.7,2.4],[1.9,-.95,-.3],[-1.9,-.95,-.3]].forEach(p=>g.add(M(new THREE.CylinderGeometry(.06,.06,.5,6),gr,p[0],p[1],p[2])));
+  return g;
+}
+function makeHPM(){
+  const g=new THREE.Group();const base=std(0x3a4252,{roughness:.8,metalness:.25}),frame=std(0x8c96a6,{metalness:.7,roughness:.3});
+  g.add(M(new THREE.BoxGeometry(3.2,.8,3.2),base,0,.4,0));
+  g.add(M(new THREE.CylinderGeometry(.35,.45,1,10),frame,0,1.3,0));
+  const head=new THREE.Group();head.position.y=2.6;g.add(head);
+  head.add(M(new THREE.BoxGeometry(3,2.6,.3),frame,0,0,-.2));
+  const panels=[];
+  for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++){const p=M(new THREE.BoxGeometry(.85,.75,.1),std(0x2a0f45,{emissive:COL.violet,emissiveIntensity:.5,metalness:.4,roughness:.3}),i*.95,j*.82,0);head.add(p);panels.push(p);}
+  g.userData={head,panels,front(){return head.localToWorld(V(0,0,.4));}};
+  return g;
+}
+function makePerson(color=0x4b5a35){
+  const g=new THREE.Group();const m=std(color,{roughness:.9,metalness:0});
+  g.add(M(new THREE.CylinderGeometry(.2,.24,.8,10),m,0,.85,0));
+  [-.1,.1].forEach(x=>g.add(M(new THREE.CylinderGeometry(.08,.08,.5,8),m,x,.25,0)));
+  g.add(M(new THREE.SphereGeometry(.16,12,10),std(0x6b5440,{roughness:.9}),0,1.42,0));
+  g.add(M(new THREE.SphereGeometry(.19,12,8,0,TAU,0,PI/2),m,0,1.47,0));
+  return g;
+}
+function makeTree(s=1){
+  const g=new THREE.Group();g.add(M(new THREE.CylinderGeometry(.08,.12,.6,6),std(0x3a2a1a,{roughness:1}),0,.3,0));
+  const lm=std(0x1d4a2a,{roughness:.95,metalness:0,flatShading:true});
+  g.add(M(new THREE.ConeGeometry(.75,1.6,7),lm,0,1.3,0));g.add(M(new THREE.ConeGeometry(.55,1.2,7),lm,0,2,0));
+  g.scale.setScalar(s);return g;
+}
+function makeGrid(size,step,color,opacity){
+  const half=size/2,pos=[],col=[],c=new THREE.Color(color),f=(x,z)=>{const d=Math.hypot(x,z)/half;return Math.max(0,1-d)**1.6;};
+  for(let a=-half;a<=half+1e-6;a+=step)for(let b=-half;b<half-1e-6;b+=step){
+    [[a,b,a,b+step],[b,a,b+step,a]].forEach(([x1,z1,x2,z2])=>{const f1=f(x1,z1),f2=f(x2,z2);if(f1+f2<=0)return;pos.push(x1,0,z1,x2,0,z2);col.push(c.r*f1,c.g*f1,c.b*f1,c.r*f2,c.g*f2,c.b*f2);});}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  return new THREE.LineSegments(g,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity,blending:THREE.AdditiveBlending,depthWrite:false}));
+}
+function makeOcean(o={}){
+  const size=o.size||220,g=new THREE.Group();
+  const p=M(new THREE.PlaneGeometry(size,size),new THREE.MeshStandardMaterial({color:o.color||0x041a2c,metalness:.45,roughness:.5,transparent:true,opacity:.95}));p.rotation.x=-PI/2;g.add(p);
+  const grid=makeGrid(110,2,o.grid||COL.cyan,(o.gridOpacity||.07)*3.2);grid.position.y=.02;g.add(grid);
+  g.userData.update=t=>{grid.position.z=(t*.5)%2;};
+  return g;
+}
+function makeFloor(o={}){
+  const size=o.size||220,g=new THREE.Group();
+  const p=M(new THREE.PlaneGeometry(size,size),std(o.color||0x0b1222,{roughness:1,metalness:0}));p.rotation.x=-PI/2;g.add(p);
+  const grid=makeGrid(110,2,o.grid||COL.cyan,(o.gridOpacity||.06)*3.2);grid.position.y=.01;g.add(grid);
+  return g;
+}
+function makeLand(w,d,x,z,o={}){
+  const h=o.h||1.4,top=o.top==null?.35:o.top,g=new THREE.Group();
+  const b=M(new THREE.BoxGeometry(w,h,d),std(o.color||0x1b2721,{roughness:.95,metalness:.05}),x,top-h/2,z);g.add(b);
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry),new THREE.LineBasicMaterial({color:o.edge||COL.cyan,transparent:true,opacity:.28}));e.position.copy(b.position);g.add(e);
+  const m=Math.max(w,d),gr=new THREE.GridHelper(m,Math.round(m/2),o.edge||COL.cyan,o.edge||COL.cyan);gr.material.transparent=true;gr.material.opacity=.06;gr.position.set(x,top+.01,z);gr.scale.set(w/m,1,d/m);g.add(gr);
+  return g;
+}
+function makePedestal(color){
+  const g=new THREE.Group();
+  g.add(M(new THREE.CylinderGeometry(2.3,2.6,.6,48),std(0x18203a,{metalness:.6,roughness:.4}),0,.3,0));
+  const ring=M(new THREE.TorusGeometry(2.33,.045,8,72),glow(color,.9),0,.62,0);ring.rotation.x=PI/2;g.add(ring);
+  const disc=M(new THREE.CircleGeometry(2.2,48),glow(color,.12),0,.61,0);disc.rotation.x=-PI/2;g.add(disc);
+  const ring2=M(new THREE.TorusGeometry(2.62,.03,6,72),glow(color,.5),0,.02,0);ring2.rotation.x=PI/2;g.add(ring2);
+  g.userData={ring,disc,ring2};return g;
+}
+function makeReef(){
+  const g=new THREE.Group();
+  const sand=M(new THREE.CylinderGeometry(7.2,8.2,.5,28),std(0xc9b98a,{roughness:1,metalness:0}),0,0,0);sand.scale.z=.62;g.add(sand);
+  const sh=M(new THREE.CircleGeometry(11,48),glow(0x2fd3c4,.13),0,.04,0);sh.rotation.x=-PI/2;sh.scale.y=.68;g.add(sh);
+  const conc=std(0x9aa0a6,{roughness:.9,metalness:.05});
+  g.add(M(new THREE.BoxGeometry(11.5,.35,3.2),conc,0,.42,.6));
+  g.add(M(new THREE.BoxGeometry(10.8,.02,1.6),std(0x2b2f35,{roughness:.9}),0,.61,.6));
+  for(let i=0;i<9;i++)g.add(M(new THREE.BoxGeometry(.6,.02,.1),new THREE.MeshBasicMaterial({color:0xdddddd}),-4.4+i*1.1,.63,.6));
+  g.add(M(new THREE.BoxGeometry(3,.9,1.8),std(0xd7d2c4,{roughness:.8}),-2.2,.7,-2.4));
+  g.add(M(new THREE.BoxGeometry(1.6,1.3,1.4),std(0xc4bfb2,{roughness:.8}),-.2,.9,-2.6));
+  const wh=std(0xf4f4f4,{roughness:.5,metalness:.1});
+  g.add(M(new THREE.SphereGeometry(.85,20,12,0,TAU,0,PI/2),wh,2.4,.25,-2.5));
+  g.add(M(new THREE.SphereGeometry(.6,20,12,0,TAU,0,PI/2),wh,3.9,.25,-2.1));
+  const tm=std(0xa0a8b2,{metalness:.7,roughness:.3});
+  g.add(M(new THREE.CylinderGeometry(.06,.16,4.2,4),tm,-4.5,2.3,-2.1));
+  for(let k=0;k<4;k++)g.add(M(new THREE.BoxGeometry(.5-k*.08,.04,.5-k*.08),tm,-4.5,1+k*.9,-2.1));
+  const blink=M(new THREE.SphereGeometry(.1,8,6),new THREE.MeshBasicMaterial({color:COL.red}),-4.5,4.45,-2.1);g.add(blink);
+  const masts=[],tips=[];
+  [[-1.3,2.6],[3.2,2.4]].forEach(([x,z])=>{g.add(M(new THREE.CylinderGeometry(.07,.09,2.7,8),tm,x,1.6,z));
+    const t=M(new THREE.BoxGeometry(.5,.45,.5),std(0x3a1218,{emissive:COL.red,emissiveIntensity:.4}),x,3.1,z);g.add(t);
+    const gs=glowSprite(COL.red,1.2,.5);gs.position.set(x,3.15,z);g.add(gs);masts.push(V(x,3.15,z));tips.push(gs);});
+  g.userData={masts,tips,blink};
+  return g;
+}
+
+/* ============================================================
+   UI + HUD HELPERS
+   ============================================================ */
+function h(tag,cls,html){const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;}
+function sec(P,title){const s=h('div','sec');if(title)s.appendChild(h('h4','',title));P.appendChild(s);return s;}
+function choice(parent,items,onPick,opt={}){
+  const wrap=h('div','btns'+(opt.row?' row':''));parent.appendChild(wrap);const map={};
+  const set=k=>Object.keys(map).forEach(x=>map[x].classList.toggle('on',x===String(k)));
+  items.forEach(it=>{const b=h('button','btn '+(it.cls||''),it.label+(it.sub?`<small>${it.sub}</small>`:''));
+    b.onclick=()=>{set(it.k);onPick(it.k,b);};wrap.appendChild(b);map[it.k]=b;});
+  if(opt.init!=null)set(opt.init);return {set,map};
+}
+function action(parent,label,cls,fn,sub){const b=h('button','btn '+(cls||''),label+(sub?`<small>${sub}</small>`:''));b.onclick=fn;parent.appendChild(b);return b;}
+function setBtnLabel(b,s){b.firstChild.textContent=s;}
+function slider(parent,o){
+  const w=h('div','slider');w.innerHTML=`<div class="sl-top"><span>${o.label}</span><b></b></div>`;
+  const inp=h('input');inp.type='range';inp.min=o.min;inp.max=o.max;inp.step=o.step;inp.value=o.value;w.appendChild(inp);
+  w.appendChild(h('div','sl-ends',`<span>${o.lo}</span><span>${o.hi}</span>`));
+  const out=w.querySelector('b');const f=()=>{const v=+inp.value;out.textContent=o.fmt?o.fmt(v):v;o.onInput(v);};
+  inp.addEventListener('input',f);parent.appendChild(w);f();return inp;
+}
+function note(parent,html,cls=''){const n=h('div','note '+cls,html);parent.appendChild(n);return n;}
+
+const hudC=document.getElementById('hud'),HG=hudC.getContext('2d');const HW=312,HH=230;
+function hudBg(g){g.setTransform(2,0,0,2,0,0);g.fillStyle='#030812';g.fillRect(0,0,HW,HH);
+  g.strokeStyle='rgba(0,240,255,.05)';g.lineWidth=1;g.beginPath();
+  for(let x=8;x<HW;x+=16){g.moveTo(x+.5,0);g.lineTo(x+.5,HH);}for(let y=7;y<HH;y+=16){g.moveTo(0,y+.5);g.lineTo(HW,y+.5);}g.stroke();}
+function txt(g,s,x,y,color=HEX.cyan,size=11,align='left',weight=600,font=MONO){g.font=`${weight} ${size}px ${font}`;g.fillStyle=color;g.textAlign=align;g.textBaseline='alphabetic';g.fillText(s,x,y);}
+function wrapTxt(g,s,x,y,maxW,lh,color,size,weight=500,font=SANS){
+  g.font=`${weight} ${size}px ${font}`;g.fillStyle=color;g.textAlign='left';g.textBaseline='alphabetic';
+  let line='';for(const w of s.split(' ')){const t=line?line+' '+w:w;if(g.measureText(t).width>maxW&&line){g.fillText(line,x,y);y+=lh;line=w;}else line=t;}
+  if(line){g.fillText(line,x,y);y+=lh;}return y;
+}
+function scopeBase(g,cx,cy,r,col='0,230,118'){
+  g.save();g.beginPath();g.arc(cx,cy,r,0,TAU);g.fillStyle=`rgba(${col},.06)`;g.fill();g.strokeStyle=`rgba(${col},.55)`;g.lineWidth=1.2;g.stroke();
+  g.strokeStyle=`rgba(${col},.2)`;g.lineWidth=1;for(let k=1;k<3;k++){g.beginPath();g.arc(cx,cy,r*k/3,0,TAU);g.stroke();}
+  g.beginPath();g.moveTo(cx-r,cy);g.lineTo(cx+r,cy);g.moveTo(cx,cy-r);g.lineTo(cx,cy+r);g.stroke();g.restore();
+}
+function scopeSweep(g,cx,cy,r,a,col='0,230,118'){
+  g.save();g.beginPath();g.arc(cx,cy,r,0,TAU);g.clip();
+  for(let i=0;i<22;i++){const b=a-i*.035;g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,r,b-.037,b);g.closePath();g.fillStyle=`rgba(${col},${.3*(1-i/22)})`;g.fill();}
+  g.strokeStyle=`rgba(${col},.9)`;g.lineWidth=1.5;g.beginPath();g.moveTo(cx,cy);g.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);g.stroke();g.restore();
+}
+function blip(g,x,y,a=1,col='0,230,118',s=4){if(a<=.01)return;g.save();g.globalAlpha=clamp(a,0,1);g.fillStyle=`rgb(${col})`;g.shadowColor=`rgb(${col})`;g.shadowBlur=10;g.beginPath();g.arc(x,y,s,0,TAU);g.fill();g.restore();}
+function noiseDots(g,n,fn,col='255,255,255',alpha=.7,s=1.6){g.fillStyle=`rgba(${col},${alpha})`;for(let i=0;i<n;i++){const p=fn();g.fillRect(p[0],p[1],s,s);}}
+function bar(g,x,y,w,hh,f,col){g.fillStyle='rgba(142,163,192,.15)';g.fillRect(x,y,w,hh);g.fillStyle=col;g.fillRect(x,y,w*clamp(f,0,1),hh);}
+function sweepVis(a,b){let d=(a-b)%TAU;if(d<0)d+=TAU;return Math.max(0,1-d/(TAU*.75));}
+function statusBar(g,s,col,t,blink=false){
+  const y=HH-12;g.save();if(blink&&Math.sin(t*9)<0)g.globalAlpha=.4;g.font=`700 11.5px ${MONO}`;
+  const w=Math.min(HW-8,g.measureText(s).width+20);g.fillStyle='rgba(3,8,18,.9)';rr(g,(HW-w)/2,y-14,w,20,4);g.fill();
+  g.strokeStyle=col;g.lineWidth=1;g.stroke();g.fillStyle=col;g.textAlign='center';g.textBaseline='alphabetic';g.fillText(s,HW/2,y);g.restore();
+}
+function hexRGB(hx){const n=parseInt(hx.slice(1),16);return `${n>>16&255},${n>>8&255},${n&255}`;}
+
+/* ============================================================
+   SLIDES
+   ============================================================ */
+const SLIDES=[];
+
+/* ---------------- SLIDE 1 ---------------- */
+SLIDES.push({
+  title:'The Invisible Battlefield',
+  sub:'Before a single shot is fired, a fight is already under way — in signals our eyes cannot see.',
+  analogy:'What if your phone, your GPS and your eyes all stopped working before a single shot was fired?',
+  time:'~1:00',hud:'SPECTRUM ACTIVITY MONITOR',cam:[[27,15,31],[-1,4,0]],
+  notes:`<p><span class="cue">0:00</span>Good morning everyone. Take a look at this scene: a fighter jet, a patrol ship, a small drone, a ground radar and a GPS satellite overhead. Quiet and peaceful, right? This is what our eyes see.</p>
+<p><span class="act">[Click “Invisible Spectrum”]</span> Now this is what is <b>really</b> going on. Every one of these machines is talking all the time: radar pulses bouncing off targets, GPS whispering down from space, radios and drone links chattering away.</p>
+<p><span class="cue">0:40</span>Modern forces rely on these invisible conversations to see, to navigate and to talk. So here is today’s big idea: if you can interfere with those conversations, you can blind, confuse or even disable an opponent — before a single shot is fired. That is <b>Electronic Attack</b>.</p>`,
+  build({G,P,fx}){
+    const ocean=makeOcean();G.add(ocean);
+    G.add(makeLand(18,20,-16,-4));
+    const radar=makeRadar({coneL:26,coneR:5});radar.position.set(-13,.35,-4);G.add(radar);
+    const jet=makeJet();G.add(jet);
+    const ship=makeShip();G.add(ship);
+    const drone=makeDrone();G.add(drone);
+    const sat=makeSatellite();sat.position.set(4,19,-14);G.add(sat);
+    const orbit=M(new THREE.TorusGeometry(16,.03,6,160),glow(COL.amber,.2));orbit.position.set(4,3,-14);orbit.rotation.y=.35;G.add(orbit);
+    const sig=new THREE.Group();G.add(sig);
+    const tg=[ship,drone,jet];
+    const gb=tg.map(()=>{const b=makeBeam(COL.amber,.03,.3);sig.add(b);return b;});
+    const gp=tg.map(()=>new Packets(sig,COL.amber,4,.11));
+    const link=makeBeam(COL.cyan,.035,.55);sig.add(link);const lp=new Packets(sig,COL.cyan,5,.12);
+    const link2=makeBeam(COL.cyan,.025,.3);sig.add(link2);const lp2=new Packets(sig,COL.cyan,4,.1);
+    let mode='eye',ringT=0,vis=0;
+    const s=sec(P,'View Mode');
+    choice(s,[{k:'eye',label:'View Mode: Human Eye',sub:'What we can actually see'},
+              {k:'spec',label:'View Mode: Invisible Spectrum',sub:'Reveal radar, GPS & radio signals',cls:'amber'}],k=>mode=k,{init:'eye'});
+    note(P,'Every jet, ship, drone and radar is <b>constantly talking</b> through invisible signals. Electronic Attack goes after <b>those conversations</b>.');
+    const tmp=V();
+    return{
+      update(dt,t){
+        ocean.userData.update(t);
+        const ja=t*.22;jet.position.set(Math.cos(ja)*12,8+Math.sin(t*.7)*.4,Math.sin(ja)*12-2);jet.rotation.y=-ja;jet.rotation.z=.35;jet.userData.update(t);
+        along(ship,u=>V(4+Math.cos(u*.08)*9,0,9+Math.sin(u*.08)*4),t);ship.userData.update(t);
+        drone.position.set(1+Math.sin(t*.4)*2,3.2+Math.sin(t*1.7)*.25,1+Math.cos(t*.3)*1.5);drone.rotation.y=t*.2;drone.userData.update(dt);
+        radar.userData.spin.rotation.y=t*.7;sat.rotation.y+=dt*.15;
+        const on=mode==='spec';vis=damp(vis,on?1:0,5,dt);
+        sig.visible=radar.userData.cone.visible=vis>.02;radar.userData.cone.material.opacity=.09*vis;
+        if(sig.visible){
+          sig.traverse(n=>{if(n.material){if(n.userData.bo==null)n.userData.bo=n.material.opacity;n.material.opacity=n.userData.bo*vis;}});
+          const sp=sat.position;
+          tg.forEach((o,i)=>{tmp.copy(o.position);if(o===ship)tmp.y+=3;gb[i].userData.set(sp,tmp);gp[i].update(sp,tmp.clone(),t,.3+i*.07);});
+          tmp.copy(ship.position);tmp.y+=3;link.userData.set(drone.position,tmp);lp.update(drone.position,tmp.clone(),t,.9,.6);
+          link2.userData.set(jet.position,tmp);lp2.update(tmp.clone(),jet.position,t,.6);
+          ringT-=dt;
+          if(ringT<=0&&on){ringT=.65;
+            fx.ring({pos:jet.position.clone(),color:COL.cyan,maxR:5,life:1.4,opacity:.5});
+            fx.ring({pos:ship.position.clone().add(V(0,.3,0)),color:COL.cyan,maxR:7,life:2,opacity:.45});
+            fx.ring({pos:radar.position.clone().add(V(0,2,0)),color:COL.green,maxR:10,life:2.2,opacity:.4});
+            fx.ring({pos:drone.position.clone(),color:COL.cyan,maxR:3,life:1,opacity:.5});}
+        }
+      },
+      hud(g,t){
+        hudBg(g);const on=mode==='spec';
+        txt(g,on?'4 ACTIVE CHANNELS DETECTED':'NOTHING VISIBLE TO THE NAKED EYE',10,18,on?HEX.green:HEX.muted,10);
+        const x0=14,x1=298,y0=158;g.strokeStyle='rgba(142,163,192,.35)';g.lineWidth=1;g.beginPath();g.moveTo(x0,y0+.5);g.lineTo(x1,y0+.5);g.stroke();
+        const bands=[{n:'RADAR',x:.13,c:HEX.green,a:1},{n:'GPS',x:.38,c:HEX.amber,a:.32},{n:'RADIO',x:.62,c:HEX.cyan,a:.8},{n:'DRONE LINK',x:.86,c:'#7fd0ff',a:.7}];
+        bands.forEach(b=>{if(!on)return;const bx=x0+b.x*(x1-x0);const gr=g.createLinearGradient(0,y0-110,0,y0);gr.addColorStop(0,b.c+'00');gr.addColorStop(1,b.c+'33');g.fillStyle=gr;g.fillRect(bx-18,y0-110,36,110);});
+        g.beginPath();
+        for(let i=0;i<=150;i++){const u=i/150;let v=.035+Math.random()*.03;
+          if(on)bands.forEach((b,j)=>{const w=.03;v+=b.a*(.62+.22*Math.sin(t*3+j*1.7))*Math.exp(-((u-b.x)**2)/(2*w*w));});
+          const x=x0+u*(x1-x0),y=y0-v*115;i?g.lineTo(x,y):g.moveTo(x,y);}
+        g.strokeStyle=on?HEX.cyan:'rgba(142,163,192,.55)';g.lineWidth=1.6;g.shadowColor=HEX.cyan;g.shadowBlur=on?8:0;g.stroke();g.shadowBlur=0;
+        bands.forEach(b=>{const bx=x0+b.x*(x1-x0);g.fillStyle=on?b.c:HEX.dim;g.beginPath();g.arc(bx,y0+14,3,0,TAU);g.fill();
+          txt(g,b.n,bx,y0+30,on?b.c:HEX.dim,9,'center',700);txt(g,on?'ACTIVE':'HIDDEN',bx,y0+42,on?HEX.text:HEX.dim,8,'center',500);});
+        txt(g,'FREQUENCY →',x1,y0-4+64,HEX.dim,8,'right',500);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 2 ---------------- */
+SLIDES.push({
+  title:'The EW Family Tree: Ears, Shield & Sword',
+  sub:'Electronic Warfare has three branches. Today we zoom in on the sword — Electronic Attack.',
+  analogy:'Every invisible fight has three roles: listening, blocking, and striking.',
+  time:'~1:00',hud:'BRANCH STATUS',cam:[[0,12.5,28],[.5,2.5,0]],
+  notes:`<p><span class="cue">1:00</span>Electronic Warfare is a family with three members. <span class="act">[Click “The Ears”]</span> First, <b>EW Support</b> — the ears. It quietly listens to enemy signals to work out who is out there, where they are and what equipment they are using.</p>
+<p><span class="act">[Click “The Shield”]</span> Second, <b>Electronic Protection</b> — the shield. It keeps our own radios, radars and GPS working even when someone is trying to jam them.</p>
+<p><span class="act">[Click “The Sword”]</span> Third, <b>Electronic Attack</b> — the sword. This is where we actively use energy to jam, fool or even damage the other side’s sensors. That is our focus for the rest of this talk.</p>`,
+  build({G,P,fx,fly}){
+    G.add(makeFloor());
+    const X=[-8.5,0,8.5],cols=[COL.green,COL.cyan,COL.red];
+    const peds=X.map((x,i)=>{const p=makePedestal(cols[i]);p.position.x=x;G.add(p);return p;});
+    const labs=[['EW SUPPORT (ES) · THE EARS',HEX.green],['ELECTRONIC PROTECTION (EP) · THE SHIELD',HEX.cyan],['ELECTRONIC ATTACK (EA) · THE SWORD',HEX.red]]
+      .map(([s,c],i)=>{const l=label(s,c,.6);l.position.set(X[i],6.7,0);G.add(l);return l;});
+    /* ES */
+    const es=makeRadar();es.userData.cone.visible=false;es.scale.setScalar(.85);es.position.set(X[0],.6,0);es.userData.tilt.rotation.x=-.45;G.add(es);
+    const box=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.6,1,1.6)),new THREE.LineBasicMaterial({color:COL.green,transparent:true,opacity:.5}));
+    box.position.set(X[0]-1.2,5,6.5);G.add(box);
+    const boxLab=label('TARGET IDENTIFIED',HEX.green,.42);boxLab.position.set(X[0]-1.2,5.9,6.5);G.add(boxLab);
+    const pcols=[COL.amber,COL.cyan,COL.green,COL.violet,0xff7090],pg=new THREE.SphereGeometry(.09,8,6);
+    const parts=[];for(let i=0;i<30;i++){const m=new THREE.Mesh(pg,glow(pcols[i%5],.95));G.add(m);
+      const nearBox=i%2===0;parts.push({m,start:nearBox?box.position.clone().add(V(rand(-.8,.8),rand(-.5,.5),rand(-.8,.8))):V(X[0]+rand(-5,5),rand(2,6.5),rand(5,10)),ph:Math.random()});}
+    /* EP */
+    const dome=M(new THREE.IcosahedronGeometry(2.75,1),glow(COL.cyan,.45,{wireframe:true}),X[1],.6,0);G.add(dome);
+    const domeS=M(new THREE.IcosahedronGeometry(2.7,1),glow(COL.cyan,.06),X[1],.6,0);G.add(domeS);
+    const spikeG=new THREE.ConeGeometry(.12,.75,8);spikeG.rotateX(PI/2);
+    const spikes=[];for(let i=0;i<8;i++){const m=new THREE.Mesh(spikeG,new THREE.MeshBasicMaterial({color:COL.red,transparent:true,opacity:.95}));G.add(m);spikes.push({m,a:-1.3+i*.37,el:rand(.15,.9),ph:i/8,pk:0});}
+    const lanes=[-.8,0,.8].map(z=>{const a=V(X[1]-1.9,1.05,z),b=V(X[1]+1.9,1.05,z);const ln=makeBeam(COL.cyan,.015,.25);ln.userData.set(a,b);G.add(ln);return {p:new Packets(G,COL.cyan,3,.13),a,b};});
+    const epC=V(X[1],1.2,0);
+    /* EA */
+    const ea=new THREE.Group();ea.position.set(X[2],.6,0);G.add(ea);
+    ea.add(M(new THREE.CylinderGeometry(.35,.55,2.2,6),std(0x3a2030,{metalness:.6,roughness:.4}),0,1.1,0));
+    const head=new THREE.Group();head.position.y=2.6;head.rotation.x=-.12;ea.add(head);
+    head.add(makeDish(1,.7,std(0xc9d1da,{metalness:.6,roughness:.35})));
+    const etip=glowSprite(COL.red,1.6,.9);etip.position.z=.85;head.add(etip);
+    const eCone=makeCone(COL.red,.07);eCone.scale.set(3,3,10);head.add(eCone);
+    const eaDir=V(0,Math.sin(.12),Math.cos(.12)),eaPos=V(X[2],3.2+.1,.85);
+    const KEYS=['es','ep','ea'];
+    const CAMS={ov:[[0,12.5,28],[.5,2.5,0]],es:[[-10,6,14],[-8.5,3,2]],ep:[[0,6.5,13.5],[0,2,0]],ea:[[14,6.5,15],[8.5,2.8,1.5]]};
+    const INFO={ov:['ELECTRONIC WARFARE',HEX.cyan,'Three jobs in the invisible fight: listen to the enemy, protect our own signals, and attack theirs.'],
+      es:['EW SUPPORT — THE EARS',HEX.green,'Quietly listens for enemy signals to work out who is out there, where they are, and what they are using.'],
+      ep:['PROTECTION — THE SHIELD',HEX.cyan,'Keeps our own radios, radars and GPS working even while someone is trying to jam them.'],
+      ea:['ATTACK — THE SWORD',HEX.red,'Actively uses energy to jam, fool or damage enemy sensors. This is today’s focus.']};
+    let focus='ov';const act=[1,1,1],tau=[0,0,0];let eaT=0;
+    const s=sec(P,'Focus a branch');
+    choice(s,[{k:'es',label:'1. The Ears (ES)',sub:'Listen & locate',cls:'green'},{k:'ep',label:'2. The Shield (EP)',sub:'Protect our own signals'},
+              {k:'ea',label:'3. The Sword (EA — Focus)',sub:'Attack their signals',cls:'red'},{k:'ov',label:'Overview All',cls:'ghost'}],
+      k=>{focus=k;fly(CAMS[k][0],CAMS[k][1]);},{init:'ov'});
+    note(P,'Think of a bodyguard team: one member <b>listens</b> for danger, one <b>blocks</b> attacks, and one <b>strikes</b> back.');
+    return{
+      update(dt,t){
+        KEYS.forEach((k,i)=>{const tgt=focus==='ov'||focus===k?1:.28;act[i]=damp(act[i],tgt,4,dt);tau[i]+=dt*act[i]*(focus===k?1.8:1);
+          peds[i].userData.ring.material.opacity=.25+.7*act[i];peds[i].userData.disc.material.opacity=.04+.12*act[i];labs[i].material.opacity=.3+.7*act[i];});
+        /* ES */
+        es.userData.spin.rotation.y=Math.sin(tau[0]*.5)*.35-.15;
+        const dish=es.userData.dishWorld();
+        parts.forEach(p=>{const k=(tau[0]*.32+p.ph)%1;p.m.position.lerpVectors(p.start,dish,k*k);p.m.material.opacity=act[0]*(k<.1?k*10:1);});
+        box.material.opacity=(.2+.6*act[0])*(.6+.4*Math.sin(tau[0]*4));box.rotation.y=tau[0]*.4;boxLab.material.opacity=act[0];
+        /* EP */
+        dome.rotation.y=tau[1]*.15;domeS.rotation.y=tau[1]*.15;
+        let hit=false;
+        spikes.forEach(sp=>{const k=(tau[1]*.35+sp.ph)%1;const din=V(Math.sin(sp.a)*Math.cos(sp.el),Math.sin(sp.el),Math.cos(sp.a)*Math.cos(sp.el));
+          if(k<.55){const r=lerp(8,2.85,k/.55);sp.m.position.copy(epC).addScaledVector(din,r);sp.m.lookAt(epC);sp.m.material.opacity=act[1];}
+          else{if(sp.pk<.55)hit=true;const a2=sp.a+1.4,dout=V(Math.sin(a2)*Math.cos(sp.el),Math.sin(sp.el)+.3,Math.cos(a2)*Math.cos(sp.el)).normalize();
+            const r=lerp(2.85,8,(k-.55)/.45);sp.m.position.copy(epC).addScaledVector(dout,r);sp.m.lookAt(sp.m.position.clone().add(dout));sp.m.material.opacity=act[1]*(1-(k-.55)/.45);}
+          sp.pk=k;});
+        if(hit&&act[1]>.5)fx.shell({pos:epC.clone(),color:COL.cyan,maxR:3.1,life:.35,opacity:.12});
+        domeS.material.opacity=damp(domeS.material.opacity,.06,5,dt);
+        lanes.forEach((l,i)=>{l.p.update(l.a,l.b,tau[1]+i*.3,.45,.5);l.p.g.children[0].material.opacity=.3+.65*act[1];});
+        dome.material.opacity=.15+.35*act[1];
+        /* EA */
+        eaT-=dt*act[2]*(focus==='ea'?2.2:1);
+        if(eaT<=0){eaT=.4;fx.ring({pos:eaPos.clone(),color:COL.red,normal:eaDir,vel:eaDir.clone().multiplyScalar(6.5),r0:.6,maxR:3.4,life:1.5,opacity:.8*act[2]});}
+        etip.material.opacity=(.5+.5*Math.sin(t*12))*act[2]+.2;eCone.material.opacity=.05+.06*act[2];
+      },
+      hud(g,t){
+        hudBg(g);const [name,col,desc]=INFO[focus];
+        txt(g,focus==='ov'?'ALL BRANCHES':'SELECTED BRANCH',12,22,HEX.muted,9);
+        txt(g,name,12,46,col,15,'left',800,SANS);
+        wrapTxt(g,desc,12,70,288,17,'#c9d7ea',12.5);
+        const chips=[['ES','EARS',HEX.green],['EP','SHIELD',HEX.cyan],['EA','SWORD',HEX.red]];
+        chips.forEach((c,i)=>{const x=12+i*100,y=150,on=focus==='ov'||KEYS[i]===focus;
+          g.save();g.globalAlpha=on?1:.35;g.strokeStyle=c[2];g.lineWidth=1.2;rr(g,x,y,88,46,8);g.stroke();
+          g.fillStyle=c[2]+'22';g.fill();txt(g,c[0],x+44,y+21,c[2],15,'center',800);txt(g,c[1],x+44,y+37,HEX.text,9,'center',600);
+          if(KEYS[i]==='ea'){txt(g,'FOCUS',x+44,y-5,HEX.red,8,'center',700);}g.restore();});
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 3 ---------------- */
+SLIDES.push({
+  title:'Electronic Attack: Soft-Kill vs. Hard-Kill',
+  sub:'Electronic Attack comes in two flavours: temporarily blind the target, or permanently break it.',
+  analogy:'Do you want to temporarily blind the opponent, or permanently break their gear?',
+  time:'~1:00',hud:'TARGET HEALTH & SIGNAL INTEGRITY',cam:[[2,9,19],[-.5,2.2,0]],
+  notes:`<p><span class="cue">2:00</span>Electronic Attack comes in two flavours. <span class="act">[Click “Test Soft-Kill”]</span> The first is <b>soft-kill</b>. We flood the drone and radar with interference. Look — they are confused, wobbling, the signal is lost. <span class="act">[Click again to stop]</span> But the moment we switch it off… they recover. Nothing was broken. It is reversible.</p>
+<p><span class="act">[Click “Test Hard-Kill”]</span> The second is <b>hard-kill</b>. Here we use so much energy that the electronics physically burn out. The drone drops, the radar is dead. That is permanent — it has to be replaced.</p>
+<p><span class="cue">2:50</span>Keep these two words in mind — soft and hard — because every technique coming up falls into one of them. <span class="act">[Reset]</span></p>`,
+  build({G,P,fx}){
+    G.add(makeFloor({color:0x0b131f}));G.add(makeLand(30,16,0,0,{h:.6,color:0x16211f}));
+    const truck=makeTruck();truck.position.set(-8,.35,0);truck.rotation.y=PI/2;G.add(truck);
+    const tl=label('EA EMITTER',HEX.red,.5);tl.position.set(-8,5.6,0);G.add(tl);
+    const drone=makeDrone({led:COL.green,scale:1.1});const dHome=V(5,3.6,-2.6);drone.position.copy(dHome);G.add(drone);
+    const radar=makeRadar({coneL:10,coneR:2.2});radar.position.set(6.5,.35,3.2);radar.rotation.y=-PI/2;G.add(radar);
+    const rHead=V(6.5,2.3,3.2);
+    const haloD=M(new THREE.IcosahedronGeometry(1.8,1),glow(COL.violet,0,{wireframe:true}));G.add(haloD);
+    const haloR=M(new THREE.IcosahedronGeometry(2.1,1),glow(COL.violet,0,{wireframe:true}));haloR.position.copy(rHead);G.add(haloR);
+    const hb=[makeBeam(0xff6a2a,.2,0),makeBeam(0xff6a2a,.2,0),makeBeam(0xfff0d0,.06,0),makeBeam(0xfff0d0,.06,0)];hb.forEach(b=>G.add(b));
+    let softOn=false,s=0,mode='normal',hardT=0,dead=false,landed=false,dvy=0,softT=0,alt=false,smokeT=0;
+    const s1=sec(P,'Choose the effect');
+    const bSoft=action(s1,'Test Soft-Kill (Reversible)','violet',()=>{if(mode==='hard')return;softOn=!softOn;bSoft.classList.toggle('on',softOn);
+      setBtnLabel(bSoft,softOn?'Stop Soft-Kill (let it recover)':'Test Soft-Kill (Reversible)');},'Confuse & blind — no lasting damage');
+    const bHard=action(s1,'Test Hard-Kill (Permanent)','red',()=>{if(mode==='hard')return;softOn=false;bSoft.classList.remove('on');setBtnLabel(bSoft,'Test Soft-Kill (Reversible)');
+      mode='hard';hardT=0;bHard.classList.add('on');},'Burn out the electronics');
+    action(s1,'Reset Target','ghost',reset);
+    note(P,'<b>Soft-kill</b> is like turning up static on a radio — switch it off and things go back to normal. <b>Hard-kill</b> is a power surge that fries the circuit board.','violet');
+    function reset(){mode='normal';softOn=false;s=0;dead=false;landed=false;hardT=0;dvy=0;fx.reset();
+      setCharred(drone,false);setCharred(radar,false);radar.userData.cone.visible=true;radar.userData.tilt.rotation.x=-.28;
+      drone.position.copy(dHome);drone.rotation.set(0,0,0);drone.userData.spin=1;hb.forEach(b=>b.material.opacity=0);
+      bSoft.classList.remove('on');bHard.classList.remove('on');setBtnLabel(bSoft,'Test Soft-Kill (Reversible)');}
+    return{
+      update(dt,t){
+        const tip=truck.userData.tipWorld();
+        s=damp(s,softOn?1:0,softOn?3:1.1,dt);
+        truck.userData.tipGlow.material.opacity=softOn||(mode==='hard'&&hardT<.8)?.6+Math.random()*.4:.35;
+        if(softOn){softT-=dt;if(softT<=0){softT=.2;alt=!alt;const tgt=alt?drone.position:rHead;const d=tgt.clone().sub(tip).normalize();
+          fx.ring({pos:tip.clone(),color:alt?COL.violet:0x6a7bff,normal:d,vel:d.clone().multiplyScalar(10),r0:.3,maxR:1.9,life:tip.distanceTo(tgt)/10,opacity:.85});}}
+        if(!dead){
+          drone.position.set(dHome.x+Math.sin(t*13)*.22*s,dHome.y+Math.sin(t*1.6)*.15+Math.sin(t*9)*.18*s,dHome.z+Math.cos(t*11)*.2*s);
+          drone.rotation.set(Math.sin(t*7)*.3*s,Math.sin(t*.4)*.6*(1-s)+Math.sin(t*5)*s,Math.sin(t*9)*.4*s);
+          drone.userData.led.material.color.setHex(s>.4?(Math.sin(t*20)>0?COL.red:0x330000):COL.green);
+          radar.userData.spin.rotation.y=Math.sin(t*.8)*.5+Math.sin(t*23)*.25*s;
+          radar.userData.cone.material.opacity=.09*(1-s*.8)*(Math.random()<s*.5?0:1);
+        }
+        drone.userData.update(dt);
+        haloD.position.copy(drone.position);haloD.rotation.y=t*2;haloD.material.opacity=dead?0:s*(.2+Math.random()*.35);
+        haloR.rotation.y=-t*1.5;haloR.material.opacity=dead?0:s*(.18+Math.random()*.3);
+        if(mode==='hard'){hardT+=dt;
+          const op=hardT<.8?(.55+Math.random()*.45):Math.max(0,1-(hardT-.8)*3);
+          hb[0].userData.set(tip,drone.position);hb[2].userData.set(tip,drone.position);hb[1].userData.set(tip,rHead);hb[3].userData.set(tip,rHead);
+          hb.forEach(b=>b.material.opacity=op*.9);
+          if(hardT>=.35&&!dead){dead=true;dvy=0;drone.userData.spin=0;
+            [drone.position.clone(),rHead.clone()].forEach(p=>{fx.burst({pos:p,color:0xffa040,n:90,speed:7,size:.24,life:1.6,up:.3});
+              fx.burst({pos:p,color:0xffffff,n:40,speed:4,size:.14,life:.8});fx.shell({pos:p,color:0xff7a3a,maxR:2.6,life:.6,opacity:.5});});
+            setCharred(drone,true);setCharred(radar,true);}
+          if(dead){
+            if(drone.position.y>.8){dvy-=9.8*dt;drone.position.y=Math.max(.8,drone.position.y+dvy*dt);drone.rotation.z+=dt*3;drone.rotation.x+=dt*1.4;}
+            else if(!landed){landed=true;fx.burst({pos:drone.position.clone(),color:0x9aa3ad,n:30,speed:3,size:.16,gravity:4});}
+            radar.userData.tilt.rotation.x=damp(radar.userData.tilt.rotation.x,.6,2,dt);
+            smokeT-=dt;if(smokeT<=0){smokeT=.12;fx.burst({pos:drone.position.clone(),color:0x55585e,n:3,speed:.4,size:.35,gravity:-1.5,life:1.8});
+              fx.burst({pos:rHead.clone(),color:0x55585e,n:3,speed:.4,size:.4,gravity:-1.5,life:2});}
+          }
+        }
+      },
+      hud(g,t){
+        hudBg(g);
+        const health=dead?0:100,sigv=dead?0:Math.round(100*(1-s*.93));
+        [{n:'TARGET A · DRONE',x:10},{n:'TARGET B · RADAR',x:162}].forEach((c,ci)=>{
+          txt(g,c.n,c.x,16,HEX.muted,9);
+          const bx=c.x,by=23,bw=140,bh=80;g.fillStyle='#061019';g.fillRect(bx,by,bw,bh);
+          if(dead){g.fillStyle='#000';g.fillRect(bx,by,bw,bh);txt(g,'NO POWER',bx+bw/2,by+bh/2+4,HEX.red,11,'center',700);}
+          else{g.save();g.beginPath();g.rect(bx,by,bw,bh);g.clip();
+            if(ci===0){g.strokeStyle='rgba(0,230,118,.55)';g.beginPath();g.moveTo(bx,by+bh*.62);g.lineTo(bx+bw,by+bh*.62);g.stroke();
+              g.fillStyle='rgba(0,230,118,.25)';g.fillRect(bx+20,by+bh*.62-10,14,10);g.fillRect(bx+90,by+bh*.62-16,22,16);}
+            else{scopeBase(g,bx+bw/2,by+bh/2,34);scopeSweep(g,bx+bw/2,by+bh/2,34,t*2.5+Math.sin(t*30)*s);}
+            g.strokeStyle='rgba(0,240,255,.6)';g.beginPath();g.moveTo(bx+bw/2-8,by+bh/2);g.lineTo(bx+bw/2+8,by+bh/2);g.moveTo(bx+bw/2,by+bh/2-8);g.lineTo(bx+bw/2,by+bh/2+8);g.stroke();
+            if(s>.02){noiseDots(g,Math.floor(s*900),()=>[bx+Math.random()*bw,by+Math.random()*bh],'255,255,255',.75);
+              g.fillStyle=`rgba(176,38,255,${s*.25})`;g.fillRect(bx,by,bw,bh);
+              for(let i=0;i<3;i++){if(Math.random()<s){g.fillStyle='rgba(255,255,255,.35)';g.fillRect(bx,by+Math.random()*bh,bw,2);}}}
+            g.restore();}
+          g.strokeStyle='rgba(0,240,255,.3)';g.strokeRect(bx+.5,by+.5,bw-1,bh-1);
+          txt(g,'HEALTH',bx,122,HEX.muted,9);txt(g,health+'%',bx+bw,122,health?HEX.green:HEX.red,9,'right',700);bar(g,bx,126,bw,7,health/100,health?HEX.green:HEX.red);
+          txt(g,'SIGNAL INTEGRITY',bx,149,HEX.muted,9);txt(g,sigv+'%',bx+bw,149,sigv>60?HEX.cyan:sigv>25?HEX.amber:HEX.red,9,'right',700);
+          bar(g,bx,153,bw,7,sigv/100,sigv>60?HEX.cyan:sigv>25?HEX.amber:HEX.red);
+        });
+        const sub=dead?'PERMANENT — MUST BE REPLACED':softOn?'REVERSIBLE — SWITCH OFF TO RESTORE':(s>.06?'JAMMER OFF — SYSTEMS REBOOTING':'');
+        if(sub)txt(g,sub,HW/2,184,dead?HEX.red:HEX.violet,9.5,'center',600);
+        if(mode==='hard'&&!dead)statusBar(g,'HIGH-POWER PULSE FIRING…',HEX.amber,t,true);
+        else if(dead)statusBar(g,'HARDWARE DESTROYED',HEX.red,t);
+        else if(s>.5)statusBar(g,'SIGNAL LOST / CONFUSED',HEX.red,t,true);
+        else if(s>.06)statusBar(g,softOn?'INTERFERENCE RISING…':'RECOVERING…',HEX.amber,t);
+        else statusBar(g,'STATUS: NORMAL',HEX.green,t);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 4 ---------------- */
+SLIDES.push({
+  title:'EA Pillar 1 — Jamming: “The Megaphone”',
+  sub:'Jamming drowns out the radar’s faint echo with louder noise, so the operator simply cannot see the jet.',
+  analogy:'Like blasting an airhorn next to someone trying to whisper in a café.',
+  time:'~1:30',hud:'ENEMY RADAR SCOPE',cam:[[33,13,17],[0,3.5,17]],
+  notes:`<p><span class="cue">3:00</span>Our first pillar is <b>jamming</b> — the megaphone. A radar works by shouting a pulse and listening for a tiny whisper of an echo. <span class="act">[Jammer OFF]</span> Here on the enemy scope you can clearly see the jet.</p>
+<p><span class="act">[Spot Jamming]</span> With <b>spot jamming</b> the jet fires a focused beam of noise straight back at the radar. That whole slice of the screen is blinded. <span class="act">[Barrage Jamming]</span> <b>Barrage jamming</b> sprays noise everywhere — the entire screen fills with snow.</p>
+<p><span class="cue">4:00</span><span class="act">[Drag the slider closer]</span> But watch what happens as the jet gets closer. The radar’s own echo gets stronger and stronger until it finally punches through the noise — we call this <b>burn-through</b>. Barrage spreads its energy thin, so it gets burned through sooner. Distance matters.</p>`,
+  build({G,P,fx}){
+    G.add(makeFloor({color:0x0a121c}));G.add(makeLand(10,10,0,0,{h:.6}));
+    const radar=makeRadar({coneL:38,coneR:7});radar.position.set(0,.35,0);G.add(radar);
+    const rl=label('ENEMY RADAR',HEX.green,.5);rl.position.set(0,4.6,-1.5);G.add(rl);
+    const jet=makeJet();G.add(jet);
+    const spot=makeBeam(COL.red,.13,.7),spotC=makeBeam(0xffc4cc,.04,.9);G.add(spot);G.add(spotC);
+    const fan=makeCone(COL.red,.13);G.add(fan);
+    const bt=label('BURN-THROUGH!',HEX.green,.85);G.add(bt);
+    let jam='off',c=.15,rt=0,burn=1;
+    const s1=sec(P,'Jammer mode');
+    choice(s1,[{k:'off',label:'Jammer OFF',sub:'Radar sees the jet clearly',cls:'green'},{k:'spot',label:'Spot Jamming',sub:'Focused noise on one channel',cls:'red'},
+               {k:'barrage',label:'Barrage Jamming',sub:'Wideband noise everywhere',cls:'red'}],k=>{jam=k;fx.reset();},{init:'off'});
+    const s2=sec(P,'Jet distance to radar');
+    slider(s2,{label:'Distance',min:0,max:1,step:.01,value:c,lo:'FAR',hi:'VERY CLOSE',fmt:v=>v<.3?'Far':v<.6?'Medium':v<.85?'Close':'Very close',onInput:v=>c=v});
+    note(P,'<b>Burn-through:</b> the closer the jet gets, the louder the radar’s own echo becomes — eventually it out-shouts the jammer. Barrage spreads its energy thin, so it gets burned through <b>sooner</b> than a focused spot jammer.','amber');
+    return{
+      update(dt,t){
+        const z=lerp(33,8,c);jet.position.set(Math.sin(t*.5)*1.2,5.5+Math.sin(t*.9)*.3,z);jet.rotation.y=PI;jet.rotation.z=Math.sin(t*.5)*.15;jet.userData.update(t);
+        radar.userData.spin.rotation.y=Math.sin(t*.9)*.45;
+        const dish=radar.userData.dishWorld(),nose=jet.position.clone().add(V(0,0,-3.4)),d=nose.distanceTo(dish),dir=dish.clone().sub(nose).normalize();
+        spot.visible=spotC.visible=jam==='spot';fan.visible=jam==='barrage';
+        if(jam==='spot'){spot.userData.set(nose,dish);spotC.userData.set(nose,dish);spot.material.opacity=.45+Math.random()*.4;
+          rt-=dt;if(rt<=0){rt=.12;fx.ring({pos:nose.clone(),color:COL.red,normal:dir,vel:dir.clone().multiplyScalar(18),r0:.25,maxR:.9,life:d/18,opacity:.9});}}
+        if(jam==='barrage'){fan.position.copy(nose);fan.lookAt(dish);fan.scale.set(d*.42,d*.42,d*1.08);fan.material.opacity=.08+Math.random()*.07;
+          rt-=dt;if(rt<=0){rt=.2;fx.ring({pos:nose.clone(),color:COL.red,normal:dir,vel:dir.clone().multiplyScalar(12),r0:.4,maxR:d*.45,life:d/12,opacity:.5});}}
+        const th=jam==='spot'?.8:.58;burn=jam==='off'?1:smooth(th-.07,th+.07,c);
+        bt.visible=jam!=='off'&&burn>.5;bt.position.copy(jet.position).add(V(0,2.3,0));
+        radar.userData.cone.material.opacity=.09+(jam!=='off'&&burn<.5?Math.random()*.04:0);
+      },
+      hud(g,t){
+        hudBg(g);const cx=156,cy=110,r=94;scopeBase(g,cx,cy,r);const sw=(t*2.2)%TAU;
+        const jb=-PI/2+Math.sin(t*.5)*.03,jr=r*lerp(.93,.2,c),jx=cx+Math.cos(jb)*jr,jy=cy+Math.sin(jb)*jr;
+        g.save();g.beginPath();g.arc(cx,cy,r,0,TAU);g.clip();
+        if(jam==='spot'){g.fillStyle='rgba(255,42,85,.16)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,r,jb-.22,jb+.22);g.closePath();g.fill();
+          noiseDots(g,520,()=>{const a=jb+rand(-.22,.22),q=rand(3,r);return[cx+Math.cos(a)*q,cy+Math.sin(a)*q];},'255,235,240',.8);}
+        if(jam==='barrage'){g.fillStyle='rgba(255,42,85,.09)';g.fillRect(0,0,HW,HH);
+          noiseDots(g,1500,()=>{const a=rand(0,TAU),q=Math.sqrt(Math.random())*r;return[cx+Math.cos(a)*q,cy+Math.sin(a)*q];},'255,255,255',.55);
+          noiseDots(g,500,()=>{const a=rand(0,TAU),q=Math.sqrt(Math.random())*r;return[cx+Math.cos(a)*q,cy+Math.sin(a)*q];},'255,42,85',.7);}
+        g.restore();
+        scopeSweep(g,cx,cy,r,sw);
+        const a=burn*(.4+.6*sweepVis(sw,jb));blip(g,jx,jy,a,'0,230,118',4.5);
+        if(burn>.5){txt(g,'JET',jx+9,jy+4,HEX.green,9,'left',700);}
+        blip(g,cx,cy,1,'0,240,255',2.5);
+        txt(g,'ENEMY OPERATOR VIEW',8,14,HEX.muted,8.5);txt(g,jam==='off'?'JAM: NONE':jam==='spot'?'JAM: SPOT':'JAM: BARRAGE',HW-8,14,jam==='off'?HEX.green:HEX.red,8.5,'right',700);
+        if(jam==='off')statusBar(g,'TARGET TRACKED',HEX.green,t);
+        else if(burn>.5)statusBar(g,'BURN-THROUGH! TARGET VISIBLE',HEX.green,t,true);
+        else statusBar(g,jam==='spot'?'SECTOR BLINDED — TARGET HIDDEN':'SCREEN FLOODED — TARGET HIDDEN',HEX.red,t);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 5 ---------------- */
+SLIDES.push({
+  title:'Why GPS Is So Easy to Jam',
+  sub:'GPS signals travel about 20,000 km from space and arrive incredibly faint. A small jammer nearby drowns them out.',
+  analogy:'A car headlight 20,000 km away vs. a floodlight shining right in your eyes.',
+  time:'~1:00',hud:'GPS RECEIVER',cam:[[30,16,34],[0,9,0]],
+  notes:`<p><span class="cue">4:30</span>Let’s talk about GPS, because almost everything depends on it: ships, aircraft, drones, even your phone and bank transactions. <span class="act">[Satellite Signal Only]</span> GPS satellites are about 20,000 kilometres up. By the time their signal reaches us it is incredibly faint — like a car headlight seen from the other side of the planet.</p>
+<p><span class="act">[Activate Ground Jammer]</span> Now a small, cheap jammer on the coast switches on. It is like shining a floodlight in your eyes. That faint satellite signal is simply drowned out. The ship and the drone lose their position — <b>GPS denied</b>.</p>
+<p><span class="cue">5:20</span>This is why GPS jamming is now one of the most common forms of Electronic Attack in the world.</p>`,
+  build({G,P,fx}){
+    const ocean=makeOcean();G.add(ocean);G.add(makeLand(26,44,-17,0,{color:0x1e2a1e}));
+    const sat=makeSatellite({scale:1.3});sat.position.set(2,26,-6);G.add(sat);
+    const sl=label('GPS SATELLITE · 20,000 km UP',HEX.amber,.6);sl.position.set(2,29.5,-6);G.add(sl);
+    const truck=makeTruck();truck.position.set(-8,.35,3);truck.rotation.y=PI/2;G.add(truck);
+    const tl=label('SMALL GROUND JAMMER',HEX.red,.5);tl.position.set(-8,6,3);G.add(tl);
+    const ship=makeShip();G.add(ship);const drone=makeDrone();G.add(drone);
+    const dc=V(-8,.35,3);
+    const dome=M(new THREE.SphereGeometry(1,40,20,0,TAU,0,PI/2),glow(COL.red,.12));dome.position.copy(dc);G.add(dome);
+    const domeW=M(new THREE.SphereGeometry(1.003,24,12,0,TAU,0,PI/2),glow(COL.red,.25,{wireframe:true}));domeW.position.copy(dc);G.add(domeW);
+    const mk=[ship,drone].map(()=>{const m=M(new THREE.OctahedronGeometry(.35),glow(COL.amber,.9));const r=M(new THREE.TorusGeometry(.65,.035,6,32),glow(COL.amber,.7));r.rotation.x=PI/2;G.add(m);G.add(r);return{m,r};});
+    let jam=false,R=0,jk=0,gt=0,pt=0;
+    const s1=sec(P,'Scenario');
+    choice(s1,[{k:'sat',label:'Satellite Signal Only',sub:'Faint signal from space',cls:'amber'},{k:'jam',label:'Activate Ground Jammer',sub:'Local noise swamps the sky',cls:'red'}],k=>{jam=k==='jam';},{init:'sat'});
+    note(P,'GPS signals are <b>weaker than the background noise</b> by the time they reach Earth. Even a jammer the size of a shoebox can blank out GPS for kilometres around.','amber');
+    const SATS=[[.3,.2],[1.1,.5],[2.0,.15],[2.6,.6],[3.3,.3],[4.0,.75],[4.6,.25],[5.3,.5],[5.9,.1],[.8,.85],[2.9,.05],[4.9,.9]];
+    return{
+      update(dt,t){
+        ocean.userData.update(t);sat.rotation.y+=dt*.12;
+        along(ship,u=>V(9+Math.cos(u*.12)*4,0,5+Math.sin(u*.12)*3),t);ship.userData.update(t);
+        drone.position.set(3+Math.sin(t*.5),3.5+Math.sin(t*1.5)*.2,7);drone.userData.update(dt);
+        jk=damp(jk,jam?1:0,jam?2.5:1.5,dt);R=damp(R,jam?19:0,jam?2.2:3,dt);
+        dome.scale.setScalar(Math.max(.001,R));domeW.scale.setScalar(Math.max(.001,R));dome.visible=domeW.visible=R>.1;
+        dome.material.opacity=.1+Math.sin(t*6)*.03;domeW.rotation.y=t*.1;
+        gt-=dt;if(gt<=0){gt=.45;fx.ring({pos:sat.position.clone().add(V(0,-1.8,0)),color:COL.amber,r0:.4,maxR:22,life:3.3,opacity:.42,vel:V(0,-7,0),
+          tick:(r,k,m)=>{m.opacity*=lerp(1,.04,jk*smooth(R*.95,R*.65,r.position.y));}});}
+        if(jam){pt-=dt;if(pt<=0){pt=.35;fx.ring({pos:dc.clone().add(V(0,.4,0)),color:COL.red,maxR:R,life:1.1,opacity:.55});}}
+        truck.userData.tipGlow.material.opacity=jam?.6+Math.random()*.4:.25;
+        [[ship,3.6],[drone,1.3]].forEach(([o,hgt],i)=>{const p=o.position.clone().add(V(0,hgt,0));mk[i].m.position.copy(p);mk[i].r.position.copy(p);mk[i].m.rotation.y=t*2;
+          const red=jk>.5&&Math.sin(t*10)>0;mk[i].m.material.color.setHex(red?COL.red:COL.amber);mk[i].r.material.color.setHex(jk>.5?COL.red:COL.amber);mk[i].r.scale.setScalar(1+(jk>.5?Math.sin(t*10)*.2:0));});
+      },
+      hud(g,t){
+        hudBg(g);txt(g,'SKY VIEW · SATELLITES',10,16,HEX.muted,8.5);
+        const cx=76,cy=98,r=62;scopeBase(g,cx,cy,r,'255,170,0');
+        SATS.forEach(([az,el],i)=>{const x=cx+Math.cos(az+t*.02)*r*(1-el),y=cy+Math.sin(az+t*.02)*r*(1-el);
+          if(jk<.5){blip(g,x,y,.95,'255,170,0',3.5);txt(g,String(i+1),x+5,y-4,HEX.amber,7.5,'left',600);}
+          else{g.strokeStyle=`rgba(255,42,85,${.4+.4*Math.sin(t*6+i)})`;g.lineWidth=1.4;g.beginPath();g.moveTo(x-3,y-3);g.lineTo(x+3,y+3);g.moveTo(x+3,y-3);g.lineTo(x-3,y+3);g.stroke();}});
+        txt(g,'SIGNAL AT RECEIVER',226,16,HEX.muted,8.5,'center');
+        const base=172;
+        [[180,'SATELLITES',HEX.amber,.05+Math.random()*.01],[268,'JAMMER',HEX.red,jk*(.92+Math.random()*.08)]].forEach(([x,n,c,f])=>{
+          g.fillStyle='rgba(142,163,192,.1)';g.fillRect(x-20,base-135,40,135);const hgt=Math.max(2,135*f);
+          const gr=g.createLinearGradient(0,base-hgt,0,base);gr.addColorStop(0,c);gr.addColorStop(1,c+'55');g.fillStyle=gr;g.fillRect(x-20,base-hgt,40,hgt);
+          txt(g,n,x,base+13,c,8.5,'center',700);});
+        txt(g,'(faint!)',180,base-14,HEX.amber,8,'center',500);
+        if(jk<.5)statusBar(g,'GPS LOCK: 12 SATELLITES',HEX.green,t);
+        else statusBar(g,'GPS DENIED — SIGNAL DROWNED OUT',HEX.red,t,true);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 6 ---------------- */
+SLIDES.push({
+  title:'EA Pillar 2 — Spoofing & Deception: “The Ventriloquist”',
+  sub:'Instead of shouting noise, deception feeds the enemy convincing lies — fake targets, fake echoes, fake positions.',
+  analogy:'Shouting noise tells the enemy you’re there. Whispering convincing lies makes them defeat themselves.',
+  time:'~1:30',hud:'ENEMY RADAR SCOPE',cam:[[18,13,22],[3,7,0]],
+  notes:`<p><span class="cue">5:30</span>Jamming is loud — it tells the enemy “someone is jamming me”. Our second pillar is quieter and sneakier: <b>deception</b>, the ventriloquist.</p>
+<p><span class="act">[Mode 1]</span> Here the jet sends back fake echoes. Suddenly the enemy radar sees ten jets. Which one is real? Their lock jumps around helplessly while the real jet slips away.</p>
+<p><span class="act">[Mode 2]</span> Even cleverer: the jet copies the radar’s echo and slowly drags a fake one backwards. The enemy’s lock follows the fake — straight into empty air.</p>
+<p><span class="cue">6:30</span><span class="act">[Mode 3]</span> And it works on GPS too. A spoofer sends counterfeit GPS signals. The crew’s screen says everything is perfect — they are right in the channel — but the real ship is drifting toward the reef. No alarm, no warning. That is why spoofing is so dangerous.</p>`,
+  build({G,P,fx,fly}){
+    const ocean=makeOcean();G.add(ocean);
+    G.add(makeLand(16,14,-18,-10));const er=makeRadar({coneL:30,coneR:2.2});er.userData.cone.material.opacity=.06;er.position.set(-17,.35,-10);G.add(er);
+    const erl=label('ENEMY RADAR',HEX.green,.5);erl.position.set(-17,4.8,-10);G.add(erl);
+    const air=new THREE.Group();G.add(air);
+    const jet=makeJet();air.add(jet);
+    const ghostMat=glow(COL.cyan,.22,{wireframe:true}),decoyMat=glow(COL.amber,.6,{wireframe:true});
+    const swapMat=(o,m)=>o.traverse(n=>{if(n.isMesh){if(n.material!==m)n.material.dispose();n.material=m;}});
+    const B=V(2,8,0);
+    const ghosts=[];for(let i=0;i<10;i++){const gj=makeJet();swapMat(gj,ghostMat);gj.rotation.y=PI/2;air.add(gj);
+      let off;do{off=V(rand(-9,9),rand(-2.5,2.5),rand(-7,7));}while(off.length()<3.5);ghosts.push({o:gj,off,ph:rand(0,TAU)});}
+    const decoy=makeJet();swapMat(decoy,decoyMat);decoy.rotation.y=PI/2;air.add(decoy);const dgs=glowSprite(COL.amber,4,.7);decoy.add(dgs);
+    const ret=new THREE.Group();air.add(ret);
+    ret.add(M(new THREE.TorusGeometry(1.7,.06,8,48),glow(COL.red,.95)));
+    for(let i=0;i<4;i++){const tk=M(new THREE.BoxGeometry(.08,.7,.05),glow(COL.red,.95));const a=i*PI/2;tk.position.set(Math.cos(a)*2.05,Math.sin(a)*2.05,0);tk.rotation.z=a+PI/2;ret.add(tk);}
+    const lockLab=label('ENEMY LOCK',HEX.red,.45);lockLab.position.y=2.6;ret.add(lockLab);
+    /* GPS spoof scene */
+    const sea=new THREE.Group();G.add(sea);
+    const real=makeShip({hull:0x4a5566});sea.add(real);
+    const bel=makeShip();swapMat(bel,glow(COL.green,.45,{wireframe:true}));sea.add(bel);
+    const belLab=label('WHAT THE CREW BELIEVES',HEX.green,.5);sea.add(belLab);
+    const realLab=label('REAL SHIP',HEX.red,.5);sea.add(realLab);
+    for(let x=-18;x<=16;x+=3.4)[[4.3,COL.green],[9.7,COL.red]].forEach(([z,c])=>{sea.add(M(new THREE.CylinderGeometry(.12,.18,.6,8),std(c===COL.green?0x1f7a4a:0x8a2a3a),x,.3,z));
+      const gs=glowSprite(c,.8,.8);gs.position.set(x,.75,z);sea.add(gs);});
+    const chl=label('SAFE SHIPPING CHANNEL',HEX.green,.5);chl.position.set(-12,1.3,7);sea.add(chl);
+    const reefC=V(10,0,16.5);
+    for(let i=0;i<8;i++){const rk=M(new THREE.DodecahedronGeometry(rand(.5,1.1),0),std(0x5a4a3a,{roughness:1,flatShading:true}),reefC.x+rand(-2.4,2.4),rand(-.2,.2),reefC.z+rand(-1.6,1.6));rk.rotation.set(rand(0,3),rand(0,3),0);sea.add(rk);}
+    const warn=M(new THREE.RingGeometry(3.2,3.5,48),glow(COL.red,.6),reefC.x,.06,reefC.z);warn.rotation.x=-PI/2;sea.add(warn);
+    const wl=label('HAZARD: REEF',HEX.red,.55);wl.position.set(reefC.x,2.4,reefC.z);sea.add(wl);
+    sea.add(makeLand(6,5,-8,21,{color:0x2a2a22}));
+    sea.add(M(new THREE.CylinderGeometry(.08,.14,4,6),std(0x9aa3ad,{metalness:.7}),-8,2.3,21));
+    const sTip=glowSprite(COL.amber,1.6,.9);sTip.position.set(-8,4.4,21);sea.add(sTip);
+    const stl=label('GPS SPOOFER',HEX.amber,.5);stl.position.set(-8,5.5,21);sea.add(stl);
+    let mode='m1',mt=0,rt=0,lockI=0,lockT=0;
+    const CAMS={m1:[[18,13,22],[3,7,0]],m2:[[4,11,21],[-2,7,0]],m3:[[-2,25,36],[-2,0,10]]};
+    const NOTES={m1:'The jet sends back <b>fake echoes</b>. The enemy sees eleven targets and cannot tell which one is real.',
+      m2:'The jet copies the radar’s echo, then <b>slowly drags a fake one away</b>. The radar lock follows the fake into empty air.',
+      m3:'Counterfeit GPS signals make the crew’s screen show a <b>perfect position</b> — while the real ship drifts toward the reef.'};
+    const s1=sec(P,'Deception technique');
+    let nEl;
+    choice(s1,[{k:'m1',label:'Mode 1: Radar Ghost Swarm',sub:'Fill the screen with fake jets'},{k:'m2',label:'Mode 2: Steal the Radar Lock',sub:'Drag the lock onto a decoy',cls:'amber'},
+               {k:'m3',label:'Mode 3: GPS Spoofing',sub:'Lie about where the ship is',cls:'amber'}],k=>{mode=k;mt=0;fx.reset();fly(CAMS[k][0],CAMS[k][1]);nEl.innerHTML=NOTES[k];},{init:'m1'});
+    nEl=note(P,NOTES.m1,'amber');
+    const fr=u=>V(-16+1.9*u,0,7+Math.pow(Math.max(0,u-2),2)*.072),fb=u=>V(-16+1.9*u,0,7);
+    let U=0;
+    const toScope=p=>[156+(p.x-er.position.x)/40*92,108+(p.z-er.position.z)/40*92];
+    return{
+      update(dt,t){
+        ocean.userData.update(t);mt+=dt;
+        const airMode=mode!=='m3';air.visible=airMode;sea.visible=!airMode;er.userData.cone.visible=airMode;
+        let tgt=null;
+        if(mode==='m1'){if(mt>13)mt=0;
+          const slip=Math.max(0,mt-1.5);jet.position.copy(B).add(V(slip*2.2,Math.sin(t)*.2,-slip*1.3));jet.rotation.y=PI/2-.5;jet.userData.update(t);
+          ghosts.forEach((gh,i)=>{gh.o.visible=true;gh.o.position.copy(B).add(gh.off).add(V(Math.sin(t*.8+gh.ph)*.6,Math.cos(t*.7+gh.ph)*.35,0));gh.o.scale.setScalar(clamp(mt*1.6-i*.12,0,1));});
+          decoy.visible=false;lockT-=dt;if(lockT<=0){lockT=.5;lockI=Math.floor(Math.random()*10);}
+          tgt=ghosts[lockI].o.position;
+          rt-=dt;if(rt<=0){rt=.5;fx.ring({pos:jet.position.clone(),color:COL.cyan,maxR:4,life:1,opacity:.5});}
+        }else if(mode==='m2'){if(mt>10)mt=0;
+          ghosts.forEach(gh=>gh.o.visible=false);
+          jet.position.copy(B).add(V(Math.sin(t*.4),Math.sin(t)*.2,0));jet.rotation.y=PI/2;jet.userData.update(t);
+          const sep=Math.max(0,mt-1);decoy.visible=true;decoy.position.copy(jet.position).add(V(-Math.min(sep*1.5,11),-Math.min(sep*.25,2),Math.min(sep*.3,2)));
+          dgs.material.opacity=.4+Math.random()*.3;
+          tgt=mt<1.2?jet.position:decoy.position;
+        }else{if(mt>16)mt=0;U=Math.min(mt,13.2);
+          along(real,fr,U);along(bel,fb,U);real.userData.update(t);bel.userData.update(t);
+          belLab.position.copy(bel.position).add(V(0,3.6,0));realLab.position.copy(real.position).add(V(0,3.6,0));realLab.visible=U>3;
+          warn.material.opacity=.35+.3*Math.sin(t*6);
+          rt-=dt;if(rt<=0){rt=.4;const from=V(-8,4.4,21),to=real.position.clone().add(V(0,2,0)),d=to.clone().sub(from).normalize();
+            fx.ring({pos:from,color:COL.amber,normal:d,vel:d.clone().multiplyScalar(8),r0:.3,maxR:2,life:from.distanceTo(to)/8,opacity:.75});}
+        }
+        if(tgt){ret.position.lerp(tgt,1-Math.exp(-14*dt));ret.quaternion.copy(camera.quaternion);ret.rotation.z+=0;
+          const sp=er.userData.spin,dx=ret.position.x-er.position.x,dz=ret.position.z-er.position.z;sp.rotation.y=Math.atan2(dx,dz);
+          er.userData.tilt.rotation.x=-Math.atan2(ret.position.y-2,Math.hypot(dx,dz));}
+      },
+      hud(g,t){
+        hudBg(g);
+        if(mode!=='m3'){
+          const cx=156,cy=108,r=92;scopeBase(g,cx,cy,r);const sw=(t*2)%TAU;scopeSweep(g,cx,cy,r,sw);
+          const pts=[];
+          if(mode==='m1'){pts.push(jet.position);ghosts.forEach(gh=>{if(gh.o.scale.x>.5)pts.push(gh.o.position);});}
+          else{pts.push(jet.position);if(mt>1)pts.push(decoy.position);}
+          pts.forEach((p,i)=>{const [x,y]=toScope(p);const big=mode==='m2'&&i===1;blip(g,x,y,.55+.45*sweepVis(sw,Math.atan2(y-cy,x-cx)),'0,230,118',big?5.5:3.8);});
+          const [lx,ly]=toScope(ret.position);g.strokeStyle=HEX.red;g.lineWidth=1.5;g.strokeRect(lx-9,ly-9,18,18);
+          g.beginPath();g.moveTo(lx-13,ly);g.lineTo(lx-9,ly);g.moveTo(lx+9,ly);g.lineTo(lx+13,ly);g.stroke();
+          txt(g,'ENEMY OPERATOR VIEW',8,14,HEX.muted,8.5);
+          if(mode==='m1'){txt(g,`TRACKS: ${pts.length} — WHICH IS REAL?`,HW-8,14,HEX.amber,8.5,'right',700);statusBar(g,'LOCK CONFUSED — JUMPING BETWEEN GHOSTS',HEX.red,t,true);}
+          else{txt(g,mt<1.2?'LOCKED ON TARGET':'LOCK FOLLOWING STRONGER ECHO',HW-8,14,mt<1.2?HEX.green:HEX.amber,8.5,'right',700);
+            statusBar(g,mt<1.2?'TARGET LOCKED':'LOCK STOLEN — TRACKING EMPTY AIR',mt<1.2?HEX.green:HEX.red,t,mt>=1.2);}
+        }else{
+          const X=x=>14+(x+18)/34*284,Z=z=>40+(z-1)/20*150;
+          g.fillStyle='rgba(0,90,140,.25)';g.fillRect(14,36,284,158);
+          g.fillStyle='rgba(0,230,118,.12)';g.fillRect(14,Z(4.3),284,Z(9.7)-Z(4.3));
+          g.strokeStyle='rgba(0,230,118,.6)';g.setLineDash([4,4]);g.beginPath();g.moveTo(14,Z(4.3));g.lineTo(298,Z(4.3));g.moveTo(14,Z(9.7));g.lineTo(298,Z(9.7));g.stroke();g.setLineDash([]);
+          g.fillStyle='rgba(255,42,85,.55)';g.beginPath();g.arc(X(10),Z(16.5),12,0,TAU);g.fill();txt(g,'REEF',X(10),Z(16.5)+24,HEX.red,8,'center',700);
+          const b=fb(U),r=fr(U);
+          g.save();g.translate(X(b.x),Z(b.z));g.fillStyle=HEX.green;g.beginPath();g.moveTo(9,0);g.lineTo(-6,-5);g.lineTo(-6,5);g.closePath();g.fill();g.restore();
+          txt(g,'OWN SHIP',X(b.x),Z(b.z)-9,HEX.green,8,'center',700);
+          if(U>3){g.save();g.globalAlpha=.6+.4*Math.sin(t*6);g.strokeStyle=HEX.red;g.setLineDash([3,3]);g.beginPath();g.arc(X(r.x),Z(r.z),7,0,TAU);g.stroke();g.restore();
+            txt(g,'TRUE POSITION (unknown to crew)',clamp(X(r.x),90,222),Z(r.z)+18,HEX.red,7.5,'center',600);}
+          txt(g,'SHIP NAVIGATION DISPLAY',8,14,HEX.muted,8.5);txt(g,'GPS: 100% NORMAL',8,29,HEX.green,10,'left',700);txt(g,'(SPOOFED!)',128,29,HEX.red,10,'left',800);
+          statusBar(g,U>=13.2?'DANGER: SHIP RUNNING AGROUND':'NO ALARM — SCREEN LOOKS PERFECT',U>=13.2?HEX.red:HEX.amber,t,U>=13.2);
+        }
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 7 ---------------- */
+SLIDES.push({
+  title:'Physical Decoys: Chaff, Flares & Towed Lures',
+  sub:'When a missile is seconds away, the jet throws out something more attractive than itself.',
+  analogy:'When a missile is seconds away, throw it a shinier, hotter, or louder distraction.',
+  time:'~1:00',hud:'MISSILE SEEKER VIEW',cam:[[8,10,-18],[0,5.5,-5]],
+  notes:`<p><span class="cue">7:00</span>Sometimes, despite everything, a missile is already on its way. Look behind the jet — it is closing in. Now the jet has three last-ditch tricks.</p>
+<p><span class="act">[Deploy Chaff]</span> <b>Chaff</b>: millions of tiny metallic strips. To a radar-guided missile, that cloud looks like a much bigger, juicier target than the jet. <span class="act">[Reset, then Deploy Flares]</span> <b>Flares</b>: burning decoys that are hotter than the engines, so a heat-seeking missile chases them instead.</p>
+<p><span class="act">[Reset, then Deploy Towed Decoy]</span> And the <b>towed decoy</b>: a small pod dragged behind on a cable that shouts a louder radar echo than the jet itself. The missile hits the pod — not the aircraft. <span class="cue">7:55</span>Shinier, hotter, or louder: that is the whole idea.</p>`,
+  build({G,P,fx}){
+    const ocean=makeOcean({color:0x06233a,gridOpacity:.12});ocean.position.y=-26;G.add(ocean);
+    const n=340,sp=new Float32Array(n*3);for(let i=0;i<n;i++){sp[i*3]=rand(-40,40);sp[i*3+1]=rand(-15,30);sp[i*3+2]=rand(-80,60);}
+    const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.BufferAttribute(sp,3));
+    const streaks=new THREE.Points(sg,new THREE.PointsMaterial({map:DOT,color:0x9fe8ff,size:.2,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false}));streaks.frustumCulled=false;G.add(streaks);
+    const jet=makeJet();G.add(jet);
+    const mis=makeMissile();G.add(mis);
+    const mLab=label('INCOMING MISSILE',HEX.red,.5);G.add(mLab);
+    const smoke=new Trail(G,280,0x8e9ab0,.55,1.7),fTrail=new Trail(G,360,0xff9a3a,.45,.9);
+    const DRIFT=V(0,0,-7);
+    /* chaff */
+    const CN=360,cp=new Float32Array(CN*3),cc=new Float32Array(CN*3),cv=[];for(let i=0;i<CN;i++)cv.push(V());
+    const cgeo=new THREE.BufferGeometry();cgeo.setAttribute('position',new THREE.BufferAttribute(cp,3));cgeo.setAttribute('color',new THREE.BufferAttribute(cc,3));
+    const chaff=new THREE.Points(cgeo,new THREE.PointsMaterial({map:DOT,size:.22,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));chaff.frustumCulled=false;chaff.visible=false;G.add(chaff);
+    const chaffC=V();
+    /* flares */
+    const flares=[];for(let i=0;i<6;i++){const s=glowSprite(0xffb040,2.4,1);s.visible=false;G.add(s);const c=glowSprite(0xffffff,.7,1);s.add(c);flares.push({s,v:V(),t0:i*.16,on:false});}
+    /* towed */
+    const pod=new THREE.Group();pod.visible=false;G.add(pod);
+    const pb=M(new THREE.CylinderGeometry(.16,.16,.9,12),std(0x2a3a4a,{emissive:COL.cyan,emissiveIntensity:.5}));pb.rotation.x=PI/2;pod.add(pb);
+    const pgl=glowSprite(COL.cyan,2.2,.9);pod.add(pgl);
+    const tether=makeBeam(COL.cyan,.025,.9);tether.visible=false;G.add(tether);
+    let phase='inbound',cm=null,cmT=0,mvel=V(),boomT=0;
+    const mStart=V(-4,3,-46);mis.position.copy(mStart);
+    const target=()=>cm==='chaff'?chaffC:cm==='flare'?(flares.find(f=>f.on)||flares[0]).s.position:pod.position;
+    const s1=sec(P,'Countermeasures');
+    const deploy=k=>{if(cm||phase!=='inbound')return;cm=k;cmT=0;phase='chase';btns[k].classList.add('on');
+      const tail=jet.position.clone().add(V(0,0,-2.6));
+      if(k==='chaff'){chaff.visible=true;for(let i=0;i<CN;i++){cp[i*3]=tail.x+rand(-.3,.3);cp[i*3+1]=tail.y+rand(-.3,.3);cp[i*3+2]=tail.z;cv[i].set(rand(-1,1),rand(-1,1),rand(-1,.4)).normalize().multiplyScalar(rand(1,4.5));}}
+      if(k==='flare')flares.forEach((f,i)=>{f.on=false;});
+      if(k==='towed'){pod.visible=true;tether.visible=true;pod.position.copy(tail);}};
+    const btns={chaff:action(s1,'Deploy Chaff','',()=>deploy('chaff'),'Shinier — fools radar-guided missiles'),
+      flare:action(s1,'Deploy Flares','amber',()=>deploy('flare'),'Hotter — fools heat-seeking missiles'),
+      towed:action(s1,'Deploy Towed Decoy','',()=>deploy('towed'),'Louder — a lure pod on a cable')};
+    action(s1,'Reset Engagement','ghost',reset);
+    note(P,'Pick any countermeasure. The seeker view (top) shows what the missile’s “eye” is locked on — and the moment it gets fooled.');
+    function reset(){phase='inbound';cm=null;cmT=0;boomT=0;mvel.set(0,0,0);mis.position.copy(mStart);mis.visible=true;mLab.visible=true;
+      chaff.visible=false;flares.forEach(f=>{f.on=false;f.s.visible=false;});pod.visible=false;tether.visible=false;smoke.reset();fTrail.reset();fx.reset();
+      Object.values(btns).forEach(b=>b.classList.remove('on'));}
+    const tmp=V();
+    return{
+      update(dt,t){
+        for(let i=0;i<n;i++){sp[i*3+2]-=30*dt;if(sp[i*3+2]<-80)sp[i*3+2]+=140;}sg.attributes.position.needsUpdate=true;
+        ocean.userData.update(t*10);
+        jet.position.set(Math.sin(t*.6)*.4,6+Math.sin(t*.9)*.25,0);jet.rotation.z=Math.sin(t*.6)*.12;jet.userData.update(t);
+        const tail=jet.position.clone().add(V(0,0,-2.6));
+        if(cm){cmT+=dt;
+          if(cm==='chaff'){let sx=0,sy=0,sz=0;for(let i=0;i<CN;i++){const v=cv[i];v.multiplyScalar(1-1.2*dt);cp[i*3]+=(v.x+DRIFT.x)*dt;cp[i*3+1]+=(v.y+DRIFT.y-.3)*dt;cp[i*3+2]+=(v.z+DRIFT.z)*dt;
+              const b=Math.random()<.3?rand(.6,1):rand(.1,.35);cc[i*3]=b*.9;cc[i*3+1]=b*.95;cc[i*3+2]=b;sx+=cp[i*3];sy+=cp[i*3+1];sz+=cp[i*3+2];}
+            chaffC.set(sx/CN,sy/CN,sz/CN);cgeo.attributes.position.needsUpdate=true;cgeo.attributes.color.needsUpdate=true;}
+          if(cm==='flare')flares.forEach((f,i)=>{if(!f.on&&cmT>=f.t0){f.on=true;f.s.visible=true;f.s.position.copy(tail).add(V(i%2?.5:-.5,-.2,0));f.v.set((i%2?1:-1)*rand(2.5,4.5),rand(1,2.5),-rand(1,3));}
+            if(f.on){f.v.y-=5*dt;f.s.position.addScaledVector(f.v,dt).addScaledVector(DRIFT,dt);f.s.material.opacity=.8+Math.random()*.2;fTrail.emit(f.s.position,.1);}});
+          if(cm==='towed'){const k=Math.min(1,cmT/1.2);pod.position.lerpVectors(tail,tail.clone().add(V(Math.sin(t*1.3)*.4,-.9,-9)),ease(k));tether.userData.set(tail,pod.position);pgl.material.opacity=.6+Math.random()*.4;}
+        }
+        if(phase==='inbound'||phase==='chase'){
+          const tgt=cm?target().clone():jet.position.clone().add(V(Math.sin(t*.7)*1.2,-.6,-12));
+          const d=tgt.clone().sub(mis.position),dist=d.length();d.normalize();
+          const spd=cm?17:Math.min(15,dist*1.3);mvel.lerp(d.multiplyScalar(spd),1-Math.exp(-(cm?6:3)*dt));mis.position.addScaledVector(mvel,dt);
+          mis.lookAt(cm?tgt:jet.position);mis.userData.update(t);
+          smoke.emit(mis.localToWorld(tmp.set(0,0,-1.5)),.08);
+          mLab.position.copy(mis.position).add(V(0,1.3,0));
+          if(cm&&dist<1.3){phase='boom';boomT=0;mis.visible=false;mLab.visible=false;const p=mis.position.clone();
+            fx.burst({pos:p,color:0xffa040,n:120,speed:9,size:.3,life:1.6,gravity:2,drift:DRIFT});fx.burst({pos:p,color:0xffffff,n:50,speed:5,size:.18,life:.8,drift:DRIFT});
+            fx.shell({pos:p,color:0xff7a3a,maxR:4,life:.7,opacity:.55});
+            if(cm==='towed'){pod.visible=false;tether.visible=false;}}
+        }
+        if(phase==='boom'){boomT+=dt;mis.position.addScaledVector(DRIFT,dt);}
+        smoke.update(dt,DRIFT);fTrail.update(dt,V(0,-1,-7));
+      },
+      hud(g,t){
+        hudBg(g);const cx=156,cy=106,r=88;
+        const heat=cm==='flare';const col=heat?'255,170,0':'0,230,118';
+        g.save();g.beginPath();g.arc(cx,cy,r,0,TAU);g.fillStyle=heat?'rgba(40,18,0,.6)':'rgba(0,30,18,.6)';g.fill();g.clip();
+        if(phase!=='boom'){
+          const proj=p=>{const l=mis.worldToLocal(p.clone());if(l.z<=.2)return null;return[cx-(l.x/l.z)*120,cy-(l.y/l.z)*120,l.z];};
+          const jp=proj(jet.position);if(jp)blip(g,jp[0],jp[1],1,col,clamp(60/jp[2],3,9));
+          if(cm==='chaff'){for(let i=0;i<CN;i+=3){const q=proj(tmp.set(cp[i*3],cp[i*3+1],cp[i*3+2]));if(q){g.fillStyle=`rgba(${col},${.4+Math.random()*.6})`;g.fillRect(q[0],q[1],2,2);}}}
+          if(cm==='flare')flares.forEach(f=>{if(!f.on)return;const q=proj(f.s.position);if(q)blip(g,q[0],q[1],1,'255,220,120',clamp(90/q[2],4,14));});
+          if(cm==='towed'&&cmT>.3){const q=proj(pod.position);if(q)blip(g,q[0],q[1],1,'0,240,255',clamp(80/q[2],4,12));}
+        }else{noiseDots(g,500,()=>[rand(cx-r,cx+r),rand(cy-r,cy+r)],'255,255,255',.4);txt(g,'SIGNAL LOST',cx,cy+4,HEX.text,12,'center',700);}
+        g.restore();
+        g.strokeStyle=`rgba(${col},.7)`;g.lineWidth=1.2;g.beginPath();g.arc(cx,cy,r,0,TAU);g.stroke();
+        g.beginPath();g.moveTo(cx-14,cy);g.lineTo(cx-5,cy);g.moveTo(cx+5,cy);g.lineTo(cx+14,cy);g.moveTo(cx,cy-14);g.lineTo(cx,cy-5);g.moveTo(cx,cy+5);g.lineTo(cx,cy+14);g.stroke();
+        g.strokeRect(cx-22,cy-22,44,44);
+        const kind=cm==='chaff'?'RADAR-GUIDED vs CHAFF':cm==='flare'?'HEAT-SEEKER vs FLARES':cm==='towed'?'RADAR-GUIDED vs TOWED DECOY':'SEEKER LOCKED ON JET';
+        txt(g,kind,8,14,cm?HEX.amber:HEX.red,8.5,'left',700);
+        if(phase!=='boom')txt(g,'RANGE '+Math.round(mis.position.distanceTo(jet.position)*55)+' m',HW-8,14,HEX.muted,8.5,'right',600);
+        if(phase==='inbound')statusBar(g,'MISSILE LOCK — DEPLOY A COUNTERMEASURE!',HEX.red,t,true);
+        else if(phase==='chase')statusBar(g,'SEEKER FOOLED — CHASING THE DECOY',HEX.amber,t);
+        else statusBar(g,'MISSILE DEFEATED — JET SAFE',HEX.green,t);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 8 ---------------- */
+SLIDES.push({
+  title:'EA Pillar 3 — Hard-Kill: “The Power Surge”',
+  sub:'Some Electronic Attack weapons don’t just confuse electronics — they physically destroy them.',
+  analogy:'Turning off the jammer lets them reboot. Frying their chips ends the fight.',
+  time:'~1:30',hud:'ENGAGEMENT STATUS',cam:[[4,10,23],[0,3,0]],
+  notes:`<p><span class="cue">8:00</span>Our third pillar is <b>hard-kill</b> — the power surge. <span class="act">[Arena A]</span> Imagine fifteen drones coming at once. Shooting them one by one with missiles is slow and expensive. A <b>high-power microwave</b> weapon sends out one invisible pulse… <span class="act">[Fire]</span> …and fries all their electronics at the same time. Fifteen out of fifteen, in a blink.</p>
+<p><span class="act">[Arena B]</span> The second hard-kill tool is the <b>radar-hunting missile</b>. It listens for the radar’s own signal and simply rides that beam all the way home. <span class="act">[Launch]</span></p>
+<p><span class="cue">9:00</span><span class="act">[Toggle “Enemy Shuts Radar Off”, Reset, Launch]</span> The obvious defence is to switch the radar off. But modern seekers remember exactly where the signal came from — and they still hit it. Going silent means you can’t see; staying on means you get hit. That’s a very tough choice to force on an opponent.</p>`,
+  build({G,P,fx,fly}){
+    G.add(makeFloor({color:0x0b1220}));
+    const A=new THREE.Group(),B=new THREE.Group();G.add(A);G.add(B);
+    /* Arena A */
+    A.add(makeLand(36,18,0,0,{h:.6,color:0x161f2a}));
+    const hpm=makeHPM();hpm.position.set(-12,.35,0);hpm.rotation.y=PI/2;A.add(hpm);
+    const hl=label('HIGH-POWER MICROWAVE',HEX.violet,.55);hl.position.set(-12,5.3,0);A.add(hl);
+    const drones=[];
+    for(let i=0;i<15;i++){const col=i%5,row=Math.floor(i/5);const d=makeDrone({led:COL.red,color:0x3a3232,scale:.72});
+      const home=V(4+row*2.6+rand(-.4,.4),2.6+row*.9+(col%2)*.7,(col-2)*2.4+rand(-.4,.4));d.position.copy(home);A.add(d);drones.push({d,home,ph:rand(0,TAU),dead:false,vy:0,landed:false});}
+    const sl=label('HOSTILE DRONE SWARM',HEX.red,.5);sl.position.set(7,6.6,0);A.add(sl);
+    const wave=makeCone(COL.violet,.3);wave.visible=false;A.add(wave);
+    let waveT=-1,count=0;
+    /* Arena B */
+    B.add(makeLand(14,14,10,0,{h:.6}));
+    const rd=makeRadar({coneR:.01,coneL:.01});rd.userData.cone.visible=false;rd.position.set(10,.35,0);B.add(rd);
+    const rl=label('ENEMY RADAR',HEX.green,.5);rl.position.set(10,4.8,-1.5);B.add(rl);
+    const beam=makeCone(COL.green,.2);B.add(beam);
+    const bjet=makeJet();B.add(bjet);
+    const arm=makeMissile({scale:.8});arm.visible=false;B.add(arm);
+    const trail=new Trail(B,220,0xbfc8d6,.45,1.3);
+    const mem=M(new THREE.IcosahedronGeometry(2.3,1),glow(COL.red,.5,{wireframe:true}));mem.visible=false;B.add(mem);
+    const memLab=label('SEEKER MEMORY: LAST KNOWN POSITION',HEX.red,.5);memLab.visible=false;B.add(memLab);
+    let arena='A',mT=-1,mFrom=V(),radarOn=true,shut=false,destroyed=false,smokeT=0,launched=false;
+    const CAMS={A:[[4,10,23],[0,3,0]],B:[[3,12,34],[0,6.5,0]]};
+    const s0=sec(P,'Arena');
+    choice(s0,[{k:'A',label:'Arena A: Microwave vs. Drone Swarm',cls:'violet'},{k:'B',label:'Arena B: Radar-Hunting Missile',cls:'red'}],k=>{arena=k;render();fly(CAMS[k][0],CAMS[k][1]);},{init:'A'});
+    const ctl=h('div','');ctl.style.cssText='display:flex;flex-direction:column;gap:12px';P.appendChild(ctl);
+    function fire(){if(waveT>=0)return;waveT=0;wave.visible=true;fx.shell({pos:hpm.userData.front(),color:COL.violet,maxR:3,life:.4,opacity:.6});}
+    function resetA(){waveT=-1;wave.visible=false;count=0;fx.reset();drones.forEach(o=>{o.dead=false;o.vy=0;o.landed=false;setCharred(o.d,false);o.d.userData.spin=1;o.d.rotation.set(0,0,0);o.d.position.copy(o.home);});}
+    function launch(){if(mT>=0||destroyed)return;mT=0;launched=true;arm.visible=true;mFrom.copy(bjet.position).add(V(0,-.6,0));arm.position.copy(mFrom);}
+    function resetB(){mT=-1;radarOn=true;destroyed=false;launched=false;arm.visible=false;mem.visible=false;memLab.visible=false;trail.reset();fx.reset();setCharred(rd,false);rd.userData.cone.visible=false;rd.userData.tilt.rotation.x=-.28;}
+    function render(){ctl.innerHTML='';document.getElementById('hudTitle').textContent=arena==='A'?'SWARM STATUS':'RADAR-HUNTING MISSILE';
+      if(arena==='A'){const s=sec(ctl,'Arena A controls');action(s,'Fire Microwave Pulse','violet',fire,'One pulse — every drone at once');action(s,'Reset Swarm','ghost',resetA);
+        note(ctl,'A microwave pulse induces a <b>power surge</b> inside every circuit it touches — like a lightning strike on electronics. Cheap per shot, and it hits a whole swarm at once.','violet');}
+      else{const s=sec(ctl,'Arena B controls');action(s,'Launch Radar-Hunting Missile','red',launch,'Rides the radar’s own beam home');
+        const tb=action(s,'Enemy Shuts Radar Off: NO','amber',()=>{shut=!shut;tb.classList.toggle('on',shut);setBtnLabel(tb,'Enemy Shuts Radar Off: '+(shut?'YES':'NO'));},'Try to hide by going silent mid-flight');
+        tb.classList.toggle('on',shut);setBtnLabel(tb,'Enemy Shuts Radar Off: '+(shut?'YES':'NO'));
+        action(s,'Reset','ghost',resetB);
+        note(ctl,'Modern radar-hunting seekers <b>remember</b> where the signal came from. Switching off mid-flight doesn’t save the radar.','red');}}
+    render();
+    return{
+      update(dt,t){
+        A.visible=arena==='A';B.visible=arena==='B';
+        /* A */
+        const firing=waveT>=0;
+        hpm.userData.panels.forEach((p,i)=>p.material.emissiveIntensity=firing?1.6:.35+.25*Math.sin(t*3+i));
+        drones.forEach(o=>{if(!o.dead){o.d.position.copy(o.home).add(V(Math.sin(t*.9+o.ph)*.25,Math.sin(t*1.7+o.ph)*.2,Math.cos(t*.8+o.ph)*.25));o.d.rotation.y=Math.sin(t*.5+o.ph)*.4;}
+          else if(!o.landed){o.vy-=9.8*dt;o.d.position.y+=o.vy*dt;o.d.rotation.z+=dt*4;o.d.rotation.x+=dt*2;
+            if(o.d.position.y<=.5){o.d.position.y=.5;o.landed=true;fx.burst({pos:o.d.position.clone(),color:0x8a8f99,n:14,speed:2.5,size:.14,gravity:4,life:.8});}}
+          o.d.userData.update(dt);});
+        if(firing){waveT+=dt;const f=hpm.userData.front(),L=waveT*24,fx0=f.x+L;wave.position.copy(f);wave.lookAt(f.clone().add(V(1,0,0)));wave.scale.set(L*.4+.1,L*.4+.1,L+.1);
+          wave.material.opacity=.32*(1-waveT/1.3);
+          if(Math.random()<.5)fx.ring({pos:V(fx0,3.5,0),color:COL.violet,normal:V(1,0,0),r0:L*.38,maxR:L*.42,life:.25,opacity:.5});
+          drones.forEach(o=>{if(!o.dead&&o.d.position.x<fx0){o.dead=true;o.vy=0;count++;setCharred(o.d,true);o.d.userData.spin=0;
+            fx.burst({pos:o.d.position.clone(),color:COL.violet,n:30,speed:4,size:.2,life:.9});fx.burst({pos:o.d.position.clone(),color:0xffffff,n:14,speed:3,size:.12,life:.5});}});
+          if(waveT>1.3){waveT=-1;wave.visible=false;}}
+        /* B */
+        bjet.position.set(-10+Math.sin(t*.4)*2,10,-3+Math.cos(t*.4)*1.5);bjet.rotation.y=PI/2;bjet.rotation.z=Math.sin(t*.4)*.1;bjet.userData.update(t);
+        const dish=rd.userData.dishWorld();
+        if(radarOn&&!destroyed){const dx=bjet.position.x-rd.position.x,dz=bjet.position.z-rd.position.z;rd.userData.spin.rotation.y=Math.atan2(dx,dz);
+          rd.userData.tilt.rotation.x=-Math.atan2(bjet.position.y-dish.y,Math.hypot(dx,dz));}
+        beam.visible=radarOn&&!destroyed;
+        if(beam.visible){beam.position.copy(dish);beam.lookAt(bjet.position);const dd=dish.distanceTo(bjet.position);beam.scale.set(1.6,1.6,dd);beam.material.opacity=.14+Math.random()*.06;}
+        if(mT>=0){mT+=dt;const k=Math.min(1,mT/3.2),tgt=destroyed?dish:dish;
+          const p=mFrom.clone().lerp(tgt,ease(k));p.y+=Math.sin(k*PI)*.6;arm.position.copy(p);arm.lookAt(tgt);arm.userData.update(t);
+          trail.emit(arm.localToWorld(V(0,0,-1.4)),.06);
+          if(shut&&radarOn&&k>.35){radarOn=false;mem.visible=true;memLab.visible=true;}
+          if(k>=1){mT=-1;destroyed=true;arm.visible=false;
+            fx.burst({pos:dish.clone(),color:0xffa040,n:140,speed:9,size:.3,life:1.6,up:.4});fx.burst({pos:dish.clone(),color:0xffffff,n:50,speed:5,size:.16,life:.8});
+            fx.shell({pos:dish.clone(),color:0xff7a3a,maxR:4,life:.7,opacity:.55});setCharred(rd,true);mem.visible=false;memLab.visible=false;}}
+        trail.update(dt);
+        mem.position.copy(dish);mem.rotation.y=t;mem.material.opacity=.3+.3*Math.sin(t*8);memLab.position.copy(dish).add(V(0,3.2,0));
+        if(destroyed){rd.userData.tilt.rotation.x=damp(rd.userData.tilt.rotation.x,.6,2,dt);smokeT-=dt;if(smokeT<=0){smokeT=.12;fx.burst({pos:dish.clone(),color:0x55585e,n:3,speed:.5,size:.45,gravity:-1.5,life:2});}}
+      },
+      hud(g,t){
+        hudBg(g);
+        if(arena==='A'){
+          txt(g,'SWARM STATUS',10,16,HEX.muted,8.5);
+          drones.forEach((o,i)=>{const x=34+(i%5)*61,y=42+Math.floor(i/5)*44;const c=o.dead?'#3a3f48':HEX.red;
+            g.strokeStyle=c;g.lineWidth=1.5;g.beginPath();g.moveTo(x-12,y-12);g.lineTo(x+12,y+12);g.moveTo(x+12,y-12);g.lineTo(x-12,y+12);g.stroke();
+            [[-12,-12],[12,-12],[-12,12],[12,12]].forEach(([a,b])=>{g.beginPath();g.arc(x+a,y+b,5,0,TAU);g.stroke();});
+            g.fillStyle=o.dead?'#3a3f48':HEX.red;g.fillRect(x-4,y-4,8,8);
+            if(o.dead){txt(g,'FRIED',x,y+25,HEX.violet,7.5,'center',700);}});
+          txt(g,`${count}/15 NEUTRALIZED`,HW/2,190,count===15?HEX.violet:HEX.text,13,'center',800);
+          if(waveT>=0)statusBar(g,'MICROWAVE PULSE FIRING',HEX.violet,t,true);
+          else statusBar(g,count===15?'15/15 NEUTRALIZED — ONE PULSE':count?'PARTIAL — RESET & FIRE AGAIN':'SWARM INBOUND',count===15?HEX.violet:count?HEX.amber:HEX.red,t,count===0);
+        }else{
+          txt(g,'RADAR-HUNTING MISSILE',10,16,HEX.muted,8.5);
+          const y=96,x0=40,x1=272;
+          g.strokeStyle=radarOn&&!destroyed?'rgba(0,230,118,.6)':'rgba(255,42,85,.5)';g.setLineDash(radarOn&&!destroyed?[]:[4,4]);g.lineWidth=2;g.beginPath();g.moveTo(x0,y);g.lineTo(x1,y);g.stroke();g.setLineDash([]);
+          txt(g,'JET',x0,y-16,HEX.cyan,9,'center',700);txt(g,'RADAR',x1,y-16,destroyed?HEX.red:HEX.green,9,'center',700);
+          blip(g,x0,y,1,'0,240,255',5);blip(g,x1,y,destroyed?.6:1,destroyed?'255,42,85':'0,230,118',6);
+          if(radarOn&&!destroyed){for(let i=0;i<4;i++){const k=((t*.9)+i/4)%1;g.strokeStyle=`rgba(0,230,118,${1-k})`;g.beginPath();g.arc(x1,y,6+k*30,PI*.75,PI*1.25);g.stroke();}}
+          if(mT>=0){const k=Math.min(1,mT/3.2),mx=lerp(x0,x1,ease(k));g.fillStyle=HEX.text;g.beginPath();g.moveTo(mx+8,y);g.lineTo(mx-6,y-4);g.lineTo(mx-6,y+4);g.closePath();g.fill();}
+          const rows=[['RADAR EMISSION',destroyed?'DESTROYED':radarOn?'TRANSMITTING':'SILENT',destroyed?HEX.red:radarOn?HEX.green:HEX.amber],
+            ['MISSILE',mT>=0?'IN FLIGHT':destroyed?'IMPACT':'READY',mT>=0?HEX.amber:destroyed?HEX.red:HEX.muted],
+            ['SEEKER GUIDANCE',mT<0?'—':radarOn?'RIDING THE BEAM':'USING MEMORY',mT<0?HEX.dim:radarOn?HEX.green:HEX.red],
+            ['SHUT-OFF TEST',shut?'ON':'OFF',shut?HEX.amber:HEX.dim]];
+          rows.forEach((r,i)=>{txt(g,r[0],16,132+i*16,HEX.muted,9);txt(g,r[1],HW-16,132+i*16,r[2],9.5,'right',700);});
+          if(destroyed)statusBar(g,shut?'RADAR WENT SILENT — STILL DESTROYED':'RADAR DESTROYED',HEX.red,t);
+          else if(mT>=0)statusBar(g,radarOn?'MISSILE RIDING THE RADAR BEAM':'RADAR SILENT — SEEKER USING MEMORY',HEX.amber,t,true);
+          else statusBar(g,'RADAR SEARCHING FOR TARGETS',HEX.green,t);
+        }
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 9 ---------------- */
+SLIDES.push({
+  title:'ASEAN Case Study 1 — South China Sea “Grey-Zone” Jamming',
+  sub:'Pressure without bullets: jamming and spoofing at sea let one side push others around while staying below the threshold of war.',
+  analogy:'Blinding ships and drones without firing a single bullet.',
+  time:'~1:30',hud:'PATROL SHIP · BRIDGE DISPLAY',cam:[[12,23,31],[0,0,-7]],
+  notes:`<p><span class="cue">9:30</span>Now let’s bring this home to our region. In the South China Sea, coast guard and fishing vessels from several Southeast Asian countries have reported GPS interference and radio jamming near contested features. This is called <b>grey-zone</b> activity: pressure that stays below the level of open war.</p>
+<p><span class="act">[Stage 1]</span> Here is a normal patrol — radar working, radio clear, GPS accurate, a scout drone overhead. <span class="act">[Stage 2]</span> The outpost switches on its jammers. The ship’s radar goes blank, the radio is full of static, and the scout drone loses its link and drops into the sea.</p>
+<p><span class="cue">10:30</span><span class="act">[Stage 3]</span> Then spoofing: the ship’s GPS suddenly says it is sitting on dry land, miles away. No shots fired, no damage you can photograph — but the patrol is blind, deaf and lost. That is why it is called the invisible battlefield.</p>`,
+  build({G,P,fx}){
+    const ocean=makeOcean({color:0x07344a,grid:0x2fd3c4,gridOpacity:.1});G.add(ocean);
+    const reef=makeReef();reef.position.set(-10,0,-8);G.add(reef);
+    const rl=label('CONTESTED REEF OUTPOST',HEX.red,.6);rl.position.set(-10,6.2,-8);G.add(rl);
+    G.add(makeLand(22,12,16,-26,{color:0x203a24}));
+    G.add(M(new THREE.CylinderGeometry(.1,.2,5,6),std(0xa0a8b2,{metalness:.7}),9,2.85,-22));
+    const hqTop=V(9,5.4,-22);const hqG=glowSprite(COL.cyan,1.4,.9);hqG.position.copy(hqTop);G.add(hqG);
+    const hl=label('COAST GUARD BASE',HEX.cyan,.5);hl.position.set(9,7,-22);G.add(hl);
+    const ship=makeShip({hull:0xe8edf2,sup:0xf4f6f8,stripe:0xff3b30});G.add(ship);
+    const sl=label('ASEAN COAST GUARD PATROL',HEX.cyan,.5);G.add(sl);
+    const drone=makeDrone({scale:.8});G.add(drone);
+    const link=makeBeam(COL.cyan,.04,.6);G.add(link);const lp=new Packets(G,COL.cyan,6,.13);
+    const dlink=makeBeam(COL.cyan,.025,.45);G.add(dlink);
+    const ghost=makeShip();ghost.traverse(n=>{if(n.isMesh){n.material.dispose();n.material=glow(COL.amber,.5,{wireframe:true});}});ghost.position.set(19,.35,-25);ghost.rotation.y=.6;G.add(ghost);
+    const gl=label('GPS SAYS: “YOU ARE HERE” (ON LAND!)',HEX.amber,.5);gl.position.set(19,4.2,-25);G.add(gl);
+    let stage=1,down=false,dvy=0,sunk=false,rt=0,nt=0,alt=0;
+    const s1=sec(P,'Timeline');let nEl;
+    const NOTES={1:'Routine patrol: <b>radar</b> sees the area, <b>radio</b> links to base, <b>GPS</b> is accurate and a scout drone flies overhead.',
+      2:'The outpost’s masts flood the area with noise: <b>radar blind</b>, <b>comms static</b>, and the scout drone loses control and falls.',
+      3:'Now the outpost broadcasts <b>fake GPS</b>. The crew’s screen jumps miles away onto land — while the real ship sits in contested water.'};
+    choice(s1,[{k:1,label:'Stage 1: Routine Maritime Patrol',sub:'Everything working normally',cls:'green'},{k:2,label:'Stage 2: Grey-Zone Jamming',sub:'Blind the radar, cut the radio',cls:'red'},
+               {k:3,label:'Stage 3: GPS Spoofing',sub:'Lie about the ship’s position',cls:'amber'}],k=>{stage=k;fx.reset();nEl.innerHTML=NOTES[k];
+      if(k===1){down=false;sunk=false;dvy=0;drone.visible=true;drone.rotation.set(0,0,0);}if(k===2&&!down){down=true;dvy=0;}},{init:1});
+    nEl=note(P,NOTES[1],'red');
+    note(P,'Grey-zone tactics leave <b>no wreckage and no casualties</b> — which makes them hard to prove and hard to respond to.');
+    const tmp=V();
+    return{
+      update(dt,t){
+        ocean.userData.update(t);
+        along(ship,u=>V(6+Math.cos(u*.07)*6,0,6+Math.sin(u*.07)*3),t);ship.userData.update(t);sl.position.copy(ship.position).add(V(0,4.4,0));
+        if(!down){drone.position.copy(ship.position).add(V(Math.sin(t*.6)*4.5,4.2+Math.sin(t*2)*.2,Math.cos(t*.6)*4.5));drone.rotation.y=t*.6;drone.userData.spin=1;}
+        else if(!sunk){dvy-=6*dt;drone.position.y+=dvy*dt;drone.rotation.z+=dt*3;drone.rotation.x+=dt*2;drone.userData.spin=.3;
+          if(drone.position.y<=.15){sunk=true;drone.visible=false;fx.burst({pos:drone.position.clone(),color:0xcff6ff,n:50,speed:4,size:.22,up:1.6,gravity:8,life:1.1});
+            fx.ring({pos:drone.position.clone().setY(.05),color:0xcff6ff,maxR:3,life:1.2,opacity:.6});}}
+        drone.userData.update(dt);
+        const mast=tmp.copy(ship.position).add(V(0,3.1,0));
+        link.userData.set(mast,hqTop);
+        if(stage===2){link.material.color.setHex(Math.random()<.5?COL.red:0x55606e);link.material.opacity=Math.random()*.6;lp.visible=false;}
+        else{link.material.color.setHex(COL.cyan);link.material.opacity=.55;lp.visible=true;lp.update(mast.clone(),hqTop,t,.35);}
+        dlink.visible=!down;if(!down)dlink.userData.set(drone.position,mast);
+        reef.userData.tips.forEach(s=>{s.material.color.setHex(stage===3?COL.amber:COL.red);s.material.opacity=stage>1?.6+Math.random()*.4:.35;s.scale.setScalar(stage>1?1.8:1.2);});
+        reef.userData.blink.visible=Math.sin(t*4)>0;
+        if(stage>1){rt-=dt;if(rt<=0){rt=stage===2?.28:.45;alt=(alt+1)%2;const p=reef.position.clone().add(reef.userData.masts[alt]);
+          fx.ring({pos:p,color:stage===2?COL.red:COL.amber,maxR:stage===2?34:30,life:stage===2?2.6:3,opacity:.95});
+          if(alt===0)fx.shell({pos:reef.position.clone().add(V(0,1,0)),color:stage===2?COL.red:COL.amber,maxR:16,life:1.6,opacity:.25,wire:true});}}
+        if(stage!==2){nt-=dt;if(nt<=0){nt=1.4;fx.ring({pos:ship.position.clone().add(V(0,.2,0)),color:COL.cyan,maxR:12,life:1.6,opacity:.35});}}
+        ghost.visible=gl.visible=stage===3;ghost.traverse(n=>{if(n.isMesh)n.material.opacity=.3+.3*Math.sin(t*5);});
+      },
+      hud(g,t){
+        hudBg(g);txt(g,'BRIDGE DISPLAY',8,14,HEX.muted,8.5);
+        const cx=66,cy=78,r=50;scopeBase(g,cx,cy,r,'0,240,255');
+        if(stage===2){g.save();g.beginPath();g.arc(cx,cy,r,0,TAU);g.clip();noiseDots(g,700,()=>[rand(cx-r,cx+r),rand(cy-r,cy+r)],'255,255,255',.55);g.restore();
+          txt(g,'RADAR BLIND',cx,cy+4,HEX.red,10,'center',800);}
+        else{const sw=(t*2)%TAU;scopeSweep(g,cx,cy,r,sw,'0,240,255');
+          const rel=reef.position.clone().sub(ship.position),px=cx+rel.x/34*r,py=cy+rel.z/34*r;blip(g,px,py,.5+.5*sweepVis(sw,Math.atan2(py-cy,px-cx)),'255,42,85',4);
+          blip(g,cx,cy,1,'0,240,255',2.5);}
+        const rows=[['NAV RADAR',stage===2?['BLIND',HEX.red]:['OK',HEX.green]],['RADIO / COMMS',stage===2?['STATIC',HEX.red]:['CLEAR',HEX.green]],
+          ['GPS POSITION',stage===3?['ERROR',HEX.red]:stage===2?['DEGRADED',HEX.amber]:['ACCURATE',HEX.green]],['SCOUT DRONE',down?['LOST',HEX.red]:['LINKED',HEX.green]]];
+        rows.forEach(([n,[v,c]],i)=>{const y=40+i*22;txt(g,n,130,y,HEX.muted,9);txt(g,v,HW-10,y,c,10,'right',800);g.fillStyle='rgba(142,163,192,.12)';g.fillRect(130,y+6,HW-140,1);});
+        const mx=8,my=138,mw=HW-16,mh=52;g.fillStyle='rgba(0,90,140,.3)';g.fillRect(mx,my,mw,mh);
+        g.fillStyle='rgba(60,110,60,.75)';g.beginPath();g.moveTo(mx+mw*.74,my);g.lineTo(mx+mw,my);g.lineTo(mx+mw,my+mh);g.lineTo(mx+mw*.8,my+mh);g.quadraticCurveTo(mx+mw*.7,my+mh*.5,mx+mw*.74,my);g.fill();
+        txt(g,'LAND',mx+mw*.9,my+mh-8,'#b8e0b8',8,'center',700);
+        g.fillStyle='rgba(255,42,85,.7)';g.beginPath();g.arc(mx+mw*.22,my+mh*.45,5,0,TAU);g.fill();txt(g,'OUTPOST',mx+mw*.22,my+mh-6,HEX.red,7.5,'center',600);
+        const onLand=stage===3,sx=onLand?mx+mw*.88:mx+mw*.48,sy=my+mh*.42;
+        g.save();if(onLand&&Math.sin(t*8)<0)g.globalAlpha=.4;g.fillStyle=onLand?HEX.red:HEX.cyan;g.translate(sx,sy);g.beginPath();g.moveTo(8,0);g.lineTo(-6,-5);g.lineTo(-6,5);g.closePath();g.fill();g.restore();
+        if(onLand){g.strokeStyle='rgba(255,42,85,.5)';g.setLineDash([3,3]);g.beginPath();g.moveTo(mx+mw*.48,sy);g.lineTo(sx-10,sy);g.stroke();g.setLineDash([]);}
+        if(stage===1)statusBar(g,'ROUTINE PATROL — ALL SYSTEMS NORMAL',HEX.green,t);
+        else if(stage===2)statusBar(g,'RADAR BLIND · COMMS STATIC · DRONE LOST',HEX.red,t,true);
+        else statusBar(g,'POSITION ERROR: DRIFTING ONTO LAND',HEX.red,t,true);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 10 ---------------- */
+SLIDES.push({
+  title:'ASEAN Case Studies 2 & 3 — Jungle Drones & City Airports',
+  sub:'From frontline drone battles to crowded airports, jamming is often the safest way to stop a drone.',
+  analogy:'From jungle frontlines to crowded city airports — why you jam drones instead of shooting them.',
+  time:'~1:30',hud:'DRONE CONTROL LINK MONITOR',cam:[[-3,9,19],[1,2.8,-1]],
+  notes:`<p><span class="cue">11:00</span><span class="act">[Scenario A]</span> In Myanmar’s ongoing conflict, cheap commercial drones carrying small explosives have become everyday weapons — and portable “jammer rifles” have become a common answer. The drone is flown by a pilot far away over a radio link. <span class="act">[Fire Jammer Rifle]</span> The soldier points the jammer, the link is cut, and the drone either hovers helplessly or falls back into its “return home” mode — away from the troops.</p>
+<p><span class="act">[Scenario B]</span> Now picture a busy airport in one of our cities. A rogue drone near the runway can shut down flights. But you cannot shoot it down over thousands of people. <span class="act">[Intercept Rogue Drone]</span> Instead, a counter-drone shield detects it, tracks it, confirms it’s hostile, then quietly takes over its link and lands it on a safe pad.</p>
+<p><span class="cue">12:20</span>Singapore’s ST Engineering builds systems along these lines. Zero explosions, zero falling debris — Electronic Attack used to <b>protect</b> civilians.</p>`,
+  build({G,P,fx,fly}){
+    const A=new THREE.Group(),B=new THREE.Group();G.add(A);G.add(B);
+    /* Scenario A: jungle */
+    A.add(makeLand(80,60,0,0,{h:.6,color:0x142a18,edge:COL.green}));
+    for(let i=0;i<70;i++){let x,z;do{x=rand(-34,34);z=rand(-26,26);}while((Math.abs(x)<13&&Math.abs(z)<7)||(Math.hypot(x-17,z+15)<4));const tr=makeTree(rand(.8,1.6));tr.position.set(x,.35,z);tr.rotation.y=rand(0,TAU);A.add(tr);}
+    [[-8,.35,1],[-9.2,.35,-.8],[-7.2,.35,-1.6]].forEach(p=>{const s=makePerson();s.position.set(...p);s.rotation.y=PI/2;A.add(s);});
+    const tl=label('GROUND TEAM',HEX.cyan,.5);tl.position.set(-8.4,2.6,-.4);A.add(tl);
+    const rifle=new THREE.Group();rifle.position.set(-7.7,1.35,1);A.add(rifle);
+    const rm=std(0x2a2f36,{metalness:.5});rifle.add(M(new THREE.BoxGeometry(.13,.16,1.05),rm,0,0,.3));
+    const rd=makeDish(.32,.8,std(0xb8c2cf,{metalness:.6}));rd.position.z=.85;rifle.add(rd);
+    const muzzle=glowSprite(COL.red,.7,.6);muzzle.position.z=1.1;rifle.add(muzzle);
+    const pilot=makePerson(0x4a3a3a);pilot.position.set(17,.35,-15);A.add(pilot);
+    A.add(M(new THREE.CylinderGeometry(.04,.06,3,6),std(0x9aa3ad,{metalness:.7}),17.6,1.85,-15));
+    const pTop=V(17.6,3.4,-15);const pg=glowSprite(COL.green,1,.8);pg.position.copy(pTop);A.add(pg);
+    const pl=label('REMOTE PILOT (FAR AWAY)',HEX.green,.5);pl.position.set(17,5,-15);A.add(pl);
+    const dA=makeDrone({payload:true,led:COL.red,color:0x3a3a2a});A.add(dA);
+    const dl=label('ARMED DRONE',HEX.red,.45);A.add(dl);
+    const link=makeBeam(COL.green,.04,.7);A.add(link);const lpk=new Packets(A,COL.green,6,.12);
+    const lost=label('LINK LOST',HEX.red,.6);lost.visible=false;A.add(lost);
+    const jc=makeCone(COL.red,.18);jc.visible=false;A.add(jc);
+    const aStart=V(13,5.5,-5),aHold=V(1,4.4,0),aLand=V(9,.75,-4);
+    let aPhase='approach',aT=0,jT=0,hoverPos=V(),linkF=1;
+    /* Scenario B: airport */
+    B.add(makeLand(90,70,0,0,{h:.6,color:0x1a2029}));
+    B.add(M(new THREE.BoxGeometry(60,.04,5),std(0x0e1116,{roughness:.9}),0,.37,4));
+    for(let i=0;i<15;i++)B.add(M(new THREE.BoxGeometry(2,.01,.18),new THREE.MeshBasicMaterial({color:0xdddddd}),-28+i*4,.4,4));
+    for(let i=0;i<20;i++)[1.2,6.8].forEach(z=>{const s=glowSprite(i%5===0?COL.amber:0xffffff,.5,.8);s.position.set(-29+i*3,.5,z);B.add(s);});
+    B.add(M(new THREE.BoxGeometry(16,2.4,4.5),std(0x2a3a4e,{metalness:.6,roughness:.2,emissive:0x0a2a44,emissiveIntensity:.5}),-6,1.55,-6.5));
+    B.add(M(new THREE.CylinderGeometry(.5,.7,7,10),std(0x8a96a8),8,3.85,-7));
+    B.add(M(new THREE.CylinderGeometry(1.2,.9,1.2,10),std(0x2a3a4e,{emissive:0x0a4a6a,emissiveIntensity:.8}),8,7.9,-7));
+    const plane=makeAirliner();plane.position.set(-12,1.55,11.5);plane.rotation.y=PI*.5;B.add(plane);
+    for(let i=0;i<28;i++){const w=rand(2.5,5),hh=rand(4,16),x=-34+i*2.6+rand(-.6,.6),z=rand(-22,-32);
+      B.add(M(new THREE.BoxGeometry(w,hh,w),std(0x162030,{emissive:i%3?0x0a1830:0x2a1e08,emissiveIntensity:.8,roughness:.6}),x,.35+hh/2,z));
+      const tlg=glowSprite(i%4?COL.cyan:COL.red,.6,.7);tlg.position.set(x,.35+hh+.3,z);B.add(tlg);}
+    const domeR=29;
+    const dome=M(new THREE.SphereGeometry(domeR,48,20,0,TAU,0,PI/2),glow(COL.cyan,.07,{wireframe:true}));dome.position.y=.35;B.add(dome);
+    const domeS=M(new THREE.SphereGeometry(domeR*.995,48,20,0,TAU,0,PI/2),glow(COL.cyan,.03));domeS.position.y=.35;B.add(domeS);
+    const dlb=label('COUNTER-DRONE SENSOR DOME',HEX.cyan,.7);dlb.position.set(0,domeR+1.5,0);B.add(dlb);
+    B.add(M(new THREE.CylinderGeometry(.15,.25,6,8),std(0xa0a8b2,{metalness:.7}),14,3.35,12));
+    const tRad=new THREE.Group();tRad.position.set(14,6.5,12);B.add(tRad);tRad.add(M(new THREE.BoxGeometry(1.6,.5,.15),std(0xdfe6ee,{metalness:.5})));
+    const tTip=V(14,7.1,12);const ttg=glowSprite(COL.cyan,1.3,.9);ttg.position.copy(tTip);B.add(ttg);
+    const ttl=label('SENSOR & SOFT-KILL TOWER',HEX.cyan,.45);ttl.position.set(14,8.4,12);B.add(ttl);
+    const padP=V(22,.4,17);
+    const pad=M(new THREE.CircleGeometry(1.8,32),glow(COL.amber,.25),padP.x,.4,padP.z);pad.rotation.x=-PI/2;B.add(pad);
+    const padR=M(new THREE.RingGeometry(1.8,2,40),glow(COL.amber,.9),padP.x,.41,padP.z);padR.rotation.x=-PI/2;B.add(padR);
+    const pdl=label('SAFE LANDING PAD',HEX.amber,.45);pdl.position.set(padP.x,2.2,padP.z);B.add(pdl);
+    const rogue=makeDrone({led:COL.red,color:0x5a2a2a,scale:.9});B.add(rogue);
+    const ret=M(new THREE.TorusGeometry(1.4,.06,8,40),glow(COL.red,.9));ret.visible=false;B.add(ret);
+    let rlab=label('UNKNOWN CONTACT',HEX.amber,.5);rlab.visible=false;B.add(rlab);
+    const sk=makeBeam(COL.cyan,.07,.8);sk.visible=false;B.add(sk);
+    let bT=0,st=-1,from=V(),rlabTxt='';
+    const enterP=u=>{const k=Math.min(1,u/6);if(k<1)return V(-46,9,-14).lerp(V(-13,6.5,4),ease(k));const a=(u-6)*.6;return V(-13+Math.cos(a)*3,6.5+Math.sin(u*1.5)*.3,4+Math.sin(a)*3);};
+    const CAMS={A:[[-4,8,18],[1,2.6,-1]],B:[[34,27,50],[3,2,5]]};
+    let sc='A';
+    const s0=sec(P,'Scenario');
+    choice(s0,[{k:'A',label:'Scenario A: Tactical “Jammer Rifle”',sub:'Myanmar conflict — frontline drones',cls:'red'},{k:'B',label:'Scenario B: Urban & Airport Shield',sub:'ASEAN cities — Changi-style concept'}],k=>{sc=k;render();fly(CAMS[k][0],CAMS[k][1]);},{init:'A'});
+    const ctl=h('div','');ctl.style.cssText='display:flex;flex-direction:column;gap:12px';P.appendChild(ctl);
+    function setLab(s,c){if(rlabTxt===s)return;rlabTxt=s;B.remove(rlab);disposeTree(rlab);const nl=label(s,c,.5);nl.visible=rlab.visible;rlab=nl;B.add(rlab);}
+    function fireA(){if(aPhase!=='approach')return;aPhase='jammed';jT=0;hoverPos.copy(dA.position);}
+    function resetA(){aPhase='approach';aT=0;jT=0;linkF=1;lost.visible=false;jc.visible=false;dA.userData.spin=1;fx.reset();}
+    function interceptB(){if(st>=0)return;st=0;from.copy(rogue.position);fx.shell({pos:tTip.clone(),color:COL.cyan,maxR:domeR,life:1.4,opacity:.2});}
+    function resetB(){st=-1;bT=0;ret.visible=false;rlab.visible=false;sk.visible=false;rogue.userData.spin=1;fx.reset();setLab('UNKNOWN CONTACT',HEX.amber);}
+    function render(){ctl.innerHTML='';document.getElementById('hudTitle').textContent=sc==='A'?'DRONE CONTROL LINK MONITOR':'COUNTER-DRONE ENGAGEMENT';
+      if(sc==='A'){const s=sec(ctl,'Scenario A controls');action(s,'Fire Jammer Rifle','red',fireA,'Cut the pilot’s control link');action(s,'Reset','ghost',resetA);
+        note(ctl,'The drone needs a <b>radio link</b> to its pilot. Jam that link and it can no longer be steered — many drones then hover or fly back home automatically.','red');}
+      else{const s=sec(ctl,'Scenario B controls');action(s,'Intercept Rogue Drone','',interceptB,'Detect → track → identify → soft-kill');action(s,'Reset','ghost',resetB);
+        note(ctl,'Over a city, shooting a drone means <b>falling debris</b>. A surgical soft-kill takes control and lands it safely instead.');}}
+    render();
+    return{
+      update(dt,t){
+        A.visible=sc==='A';B.visible=sc==='B';
+        /* A */
+        aT+=dt;let dp;
+        if(aPhase==='approach'){dp=aStart.clone().lerp(aHold,ease(Math.min(1,aT/9))).add(V(0,Math.sin(t*1.6)*.2,Math.sin(t*.8)*.3));linkF=damp(linkF,1,3,dt);}
+        else if(aPhase==='jammed'){jT+=dt;dp=hoverPos.clone().add(V(Math.sin(t*9)*.2,Math.sin(t*7)*.15,Math.cos(t*8)*.2));if(jT>1.8){aPhase='retreat';jT=0;hoverPos.copy(dp);}}
+        else if(aPhase==='retreat'){jT+=dt;const k=Math.min(1,jT/4.5);dp=hoverPos.clone().lerp(aLand,ease(k));if(k>=1){aPhase='landed';dA.userData.spin=0;fx.burst({pos:aLand.clone(),color:0x8a7a5a,n:20,speed:2,size:.15,gravity:4,life:.8});}}
+        else dp=aLand.clone();
+        dA.position.copy(dp);if(aPhase==='approach')dA.lookAt(V(-8,dp.y,0));dA.userData.update(dt);
+        dl.position.copy(dA.position).add(V(0,1.3,0));
+        rifle.lookAt(dA.position);
+        const jamming=aPhase==='jammed'||aPhase==='retreat';jc.visible=jamming;muzzle.material.opacity=jamming?.6+Math.random()*.4:.25;
+        if(jamming){const mz=rifle.localToWorld(V(0,0,1.1));jc.position.copy(mz);jc.lookAt(dA.position);const d=mz.distanceTo(dA.position);jc.scale.set(d*.085,d*.085,d*1.02);jc.material.opacity=.12+Math.random()*.1;linkF=damp(linkF,0,2.5,dt);}
+        link.userData.set(dA.position,pTop);
+        if(aPhase==='approach'){link.material.color.setHex(COL.green);link.material.opacity=.7;lpk.visible=true;lpk.update(pTop,dA.position.clone(),t,.6);lost.visible=false;}
+        else{link.material.color.setHex(COL.red);link.material.opacity=linkF*(.3+Math.random()*.5);lpk.visible=false;lost.visible=true;lost.position.copy(dA.position).lerp(pTop,.5).add(V(0,1,0));}
+        /* B */
+        bT+=dt;
+        if(st<0){rogue.position.copy(enterP(bT));}
+        else{st+=dt;
+          if(st<3.5){rogue.position.copy(enterP(bT));from.copy(rogue.position);}
+          else{const k=Math.min(1,(st-3.5)/6),mid=from.clone().lerp(padP,.5).add(V(0,3,0));
+            const a=from.clone().lerp(mid,k),b=mid.clone().lerp(padP.clone().add(V(0,.55,0)),k);rogue.position.copy(a.lerp(b,k));
+            if(k>=1)rogue.userData.spin=Math.max(0,rogue.userData.spin-dt);}
+          ret.visible=st>=1;rlab.visible=st>=2;
+          if(st>=2&&st<3)setLab('ROGUE DRONE — CONFIRMED',HEX.red);
+          else if(st>=3&&st<9.5)setLab('SOFT-KILL: CONTROL TAKEN',HEX.cyan);
+          else if(st>=9.5)setLab('SAFELY LANDED — ZERO DEBRIS',HEX.green);
+          ret.material.color.setHex(st>=9.5?COL.green:st>=3?COL.cyan:COL.red);
+          sk.visible=st>=3&&st<9.5;if(sk.visible){sk.userData.set(tTip,rogue.position);sk.material.opacity=.5+Math.random()*.4;}
+          domeS.material.opacity=st<1?.03+.12*Math.abs(Math.sin(st*PI*3)):.03;}
+        ret.position.copy(rogue.position);ret.quaternion.copy(camera.quaternion);rlab.position.copy(rogue.position).add(V(0,2,0));
+        rogue.userData.update(dt);tRad.rotation.y=t*1.5;padR.material.opacity=.5+.4*Math.sin(t*4);
+      },
+      hud(g,t){
+        hudBg(g);
+        if(sc==='A'){
+          txt(g,'PILOT ↔ DRONE CONTROL LINK',8,14,HEX.muted,8.5);
+          const lost=aPhase!=='approach';const x0=12,x1=300,y=56;
+          g.beginPath();for(let i=0;i<=120;i++){const x=x0+(x1-x0)*i/120;const v=lost?rand(-1,1)*(.4+linkF*.6)*18:Math.sin(i*.35+t*8)*14*Math.sin(i*.05+t);i?g.lineTo(x,y+v):g.moveTo(x,y+v);}
+          g.strokeStyle=lost?HEX.red:HEX.green;g.lineWidth=1.5;g.stroke();
+          txt(g,'LINK STRENGTH',12,100,HEX.muted,9);bar(g,12,105,288,8,linkF,linkF>.5?HEX.green:HEX.red);
+          const mode=aPhase==='approach'?['ATTACK RUN — UNDER CONTROL',HEX.red]:aPhase==='jammed'?['HOVERING — NO COMMANDS',HEX.amber]:aPhase==='retreat'?['AUTO RETURN / LANDING',HEX.amber]:['LANDED — OUT OF ACTION',HEX.green];
+          [['PILOT CONTROL',lost?['LOST',HEX.red]:['LINKED',HEX.green]],['DRONE MODE',mode],['TROOPS',aPhase==='approach'?['THREAT INBOUND',HEX.red]:['SAFE',HEX.green]]]
+            .forEach(([n,[v,c]],i)=>{const yy=136+i*18;txt(g,n,12,yy,HEX.muted,9);txt(g,v,300,yy,c,9.5,'right',800);});
+          statusBar(g,aPhase==='approach'?'ARMED DRONE APPROACHING':'LINK SEVERED — DRONE NEUTRALIZED',aPhase==='approach'?HEX.red:HEX.green,t,aPhase==='approach');
+        }else{
+          txt(g,'C-UAS ENGAGEMENT SEQUENCE',8,14,HEX.muted,8.5);
+          const steps=[['DETECT','Dome spots an unknown drone',0],['TRACK','Follow its flight path',1],['IDENTIFY','Confirm it is rogue, not friendly',2],['SOFT-KILL','Take over its control link',3],['SAFE LANDING','Guide it down — zero debris',9.5]];
+          steps.forEach(([n,d,at],i)=>{const y=34+i*32,on=st>=at,act=on&&(i===4||st<steps[i+1][2]);
+            g.save();g.globalAlpha=on?1:.35;const c=i===4&&on?HEX.green:act?HEX.amber:on?HEX.cyan:HEX.dim;
+            g.strokeStyle=c;g.lineWidth=1.2;rr(g,10,y,24,24,6);g.stroke();if(on){g.fillStyle=c+'33';g.fill();}
+            txt(g,on&&!act?'✓':String(i+1),22,y+16,c,11,'center',800);txt(g,n,44,y+11,c,10,'left',800);txt(g,d,44,y+23,HEX.muted,9,'left',500,SANS);g.restore();});
+          statusBar(g,st<0?'MONITORING AIRSPACE':st>=9.5?'THREAT REMOVED — FLIGHTS CONTINUE':'ENGAGEMENT IN PROGRESS',st<0?HEX.cyan:st>=9.5?HEX.green:HEX.amber,t,st>=0&&st<9.5);
+        }
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 11 ---------------- */
+SLIDES.push({
+  title:'ASEAN Capabilities Map — Who Has What?',
+  sub:'Southeast Asian countries are building very different electronic warfare toolkits. Click a beacon or a button to explore.',
+  analogy:'Different neighbours, different invisible toolkits.',
+  time:'~1:30',hud:'REGIONAL OVERVIEW',cam:[[0,22,17],[0,0,-1]],
+  notes:`<p><span class="cue">12:30</span>So who in our neighbourhood has what? <span class="act">[Singapore]</span> Singapore is the regional technology leader: F-15SG fighters with self-protection suites, F-35s on order, Formidable-class frigates, and home-grown counter-drone and EW systems from DSO and ST Engineering.</p>
+<p><span class="act">[Vietnam]</span> Vietnam has gone its own way: Viettel designs and builds its own radars and mobile jammers to protect a very long coastline. <span class="act">[Thailand & Indonesia]</span> Thailand flies Gripen jets with built-in electronic warfare suites, and Indonesia is receiving Rafale jets with the SPECTRA system, which can jam or fool enemy radar.</p>
+<p><span class="cue">13:40</span><span class="act">[Philippines & Malaysia]</span> The Philippines and Malaysia are focused on building the shield: coastal surveillance radars and jam-resistant communications for the South China Sea. Different neighbours, different toolkits — but everyone is investing.</p>`,
+  build({G,P,fx,fly}){
+    const ocean=makeOcean({color:0x051a2c,gridOpacity:.1});ocean.position.y=-.05;G.add(ocean);
+    const k=.62,ll=(lon,lat,y=0)=>V((lon-109)*k,y,-(lat-6)*k);
+    const D={
+      mm:[[92.2,21],[93.5,24.5],[95,28],[97.5,28],[98.7,24],[101,21.5],[99,19],[98.5,16],[99,12],[98.6,10],[97.8,14.5],[97.5,16.5],[94.5,16],[94,18.5]],
+      th:[[98.5,20.3],[100.5,20.3],[101.5,19],[104.5,17.5],[105.5,15],[102.5,12],[101,12.6],[100,13.5],[99.2,11],[100.5,8],[101,6.5],[100.2,6.5],[98.3,8],[98.7,10],[99,12],[98.5,16],[99,19]],
+      ic:[[100.5,20.3],[102.5,22.5],[103.2,20.8],[104,19.5],[105,18.5],[106.8,16.3],[107.6,14.5],[107.5,12.3],[106.2,11],[104.8,10.4],[103,10.8],[102.5,12],[105.5,15],[104.5,17.5],[101.5,19]],
+      vn:[[102.5,22.5],[105,23.3],[107.5,21.5],[106.5,20],[105.7,19],[106.5,17.5],[108,16],[109.3,13],[109,11.5],[107,10.4],[106.5,9.3],[105,8.6],[104.8,10.4],[106.2,11],[107.5,12.3],[107.6,14.5],[106.8,16.3],[105,18.5],[104,19.5],[103.2,20.8]],
+      myp:[[100.2,6.5],[101,6.5],[102.2,6.2],[103.4,4.5],[103.5,2.5],[104.3,1.5],[103.5,1.4],[101.3,2.8],[100.4,4.5]],
+      myb:[[109.7,1.9],[111,1.7],[113,3.2],[115.5,5.2],[117,7],[118.9,5],[117.6,4.2],[115.6,4.1],[114.6,2.3],[113.5,1.4],[111.8,1],[110,1.4]],
+      bo:[[109,1.5],[110,-1.5],[110.3,-3],[114.5,-4],[116.5,-3.5],[116.2,-1],[117.9,1],[118.6,4.2],[117.6,4.2],[115.6,4.1],[114.6,2.3],[113.5,1.4],[111.8,1],[110,1.4]],
+      su:[[95.3,5.6],[97.5,5.2],[100.4,2.3],[104,-1],[106,-3],[105.8,-5.8],[104.5,-5.9],[102.3,-4],[100.3,-1],[98.6,1.7]],
+      jv:[[105.2,-6.8],[106,-5.9],[108.3,-6.2],[110.4,-6.9],[112.6,-6.9],[114.5,-7.8],[114.4,-8.7],[111,-8.2],[108,-7.8],[106.4,-7.4]],
+      sl:[[119.4,-5.5],[120.4,-5.5],[120.5,-2.8],[121.3,-4.7],[123.2,-4.8],[121.8,-3],[122.5,-1],[121,-1],[121,.5],[124.9,1.5],[124.6,.5],[120.2,.8],[119.5,-.5],[119,-3.5]],
+      lz:[[120,18.5],[122.2,18.5],[122.4,17],[121.6,15.8],[122,14.2],[124,13],[123.3,12.5],[121.8,13.8],[120.6,14.2],[120.1,15.5],[119.8,16.3]],
+      mi:[[122,7],[123.6,7.8],[124.2,8.2],[125.4,9.8],[126.6,7.3],[126.1,6.3],[125.2,5.6],[124.1,6.4],[123.2,7.5],[122.1,6.9]],
+      vi:[[122,11.8],[123.5,10.5],[125,11.2],[125.3,10.2],[124,9.6],[122.4,9.9]],
+      pa:[[117.2,8.4],[119.6,11.4],[119.4,10.4],[117.6,8.2]]};
+    const GROUP={mm:null,ic:null,th:'thid',su:'thid',jv:'thid',bo:'thid',sl:'thid',vn:'vn',myp:'phmy',myb:'phmy',lz:'phmy',mi:'phmy',vi:'phmy',pa:'phmy'};
+    const meshes=[],pick=[];
+    Object.entries(D).forEach(([id,pts])=>{const sh=new THREE.Shape();pts.forEach(([lo,la],i)=>{const x=(lo-109)*k,y=(la-6)*k;i?sh.lineTo(x,y):sh.moveTo(x,y);});
+      const grp=GROUP[id],hgt=grp?.42:.3;
+      const geo=new THREE.ExtrudeGeometry(sh,{depth:hgt,bevelEnabled:true,bevelThickness:.04,bevelSize:.04,bevelSegments:1});
+      const m=M(geo,std(grp?0x1f3550:0x172231,{roughness:.7,metalness:.25,emissive:COL.cyan,emissiveIntensity:0}));m.rotation.x=-PI/2;m.userData.key=grp;G.add(m);
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(geo,25),new THREE.LineBasicMaterial({color:grp?COL.cyan:0x4a5a70,transparent:true,opacity:grp?.45:.25}));e.rotation.x=-PI/2;G.add(e);
+      meshes.push({m,e,grp});if(grp)pick.push(m);});
+    const sgp=ll(103.82,1.35);
+    const sgm=M(new THREE.CylinderGeometry(.28,.28,.55,20),std(0x1f3550,{emissive:COL.cyan,emissiveIntensity:.2}),sgp.x,.27,sgp.z);sgm.userData.key='sg';G.add(sgm);pick.push(sgm);meshes.push({m:sgm,grp:'sg'});
+    const BEA=[['sg',103.82,1.35],['vn',106.9,14.2],['th',101,15.2],['id',110.6,-7.3],['ph',121.1,16],['my',102,4]];
+    const KEYOF={sg:'sg',vn:'vn',th:'thid',id:'thid',ph:'phmy',my:'phmy'};
+    const beacons=BEA.map(([id,lo,la])=>{const p=ll(lo,la),g=new THREE.Group();g.position.copy(p);G.add(g);
+      const b=M(new THREE.CylinderGeometry(.05,.05,3,8),glow(COL.cyan,.7),0,1.9,0);g.add(b);
+      const top=glowSprite(COL.cyan,1.1,1);top.position.y=3.5;g.add(top);
+      const ring=M(new THREE.RingGeometry(.5,.62,32),glow(COL.cyan,.8),0,.5,0);ring.rotation.x=-PI/2;g.add(ring);
+      const hit=M(new THREE.SphereGeometry(.9,10,8),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}),0,2.2,0);hit.userData.key=KEYOF[id];g.add(hit);pick.push(hit);
+      return{id,g,b,top,ring,key:KEYOF[id]};});
+    const icons=[];
+    const addIcon=(o,lo,la,y,sc)=>{o.scale.setScalar(sc);o.position.copy(ll(lo,la,y));G.add(o);icons.push({o,y});};
+    addIcon(makeJet(),104.8,2.6,2.6,.2);addIcon(makeShip(),105.4,.2,.05,.2);addIcon(makeTruck(),108.6,15.5,1.2,.25);
+    addIcon(makeJet(),100.2,17,2.2,.2);addIcon(makeJet(),112,-8.6,2.2,.2);addIcon(makeRadar({coneR:.01}),122.5,14,1.1,.28);addIcon(makeRadar({coneR:.01}),116.5,5.7,1.1,.28);
+    icons.forEach(i=>{i.o.traverse(n=>{if(n.material&&n.material.blending===THREE.AdditiveBlending&&n.geometry&&n.geometry.type==='ConeGeometry'&&i.o.userData.cone===n)n.visible=false;});if(i.o.userData.cone)i.o.userData.cone.visible=false;});
+    [['MYANMAR',96.5,21,HEX.dim],['THAILAND',101.2,15.5,HEX.text],['VIETNAM',105.2,20.8,HEX.text],['MALAYSIA',102.4,4.2,HEX.text],['SINGAPORE',103.8,.2,HEX.cyan],
+     ['INDONESIA',113.5,-2,HEX.text],['PHILIPPINES',122.5,13.4,HEX.text],['SOUTH CHINA SEA',113.5,11.5,'#4fb8c8']].forEach(([s,lo,la,c])=>{const l=label(s,c,.5);l.position.copy(ll(lo,la,1.3));G.add(l);});
+    const INFO={
+      ov:{name:'Southeast Asia',tag:'Different neighbours, different invisible toolkits',items:['Some of the world’s busiest sea lanes run through this region','Shared worries: GPS interference at sea and rogue drones','Click a glowing beacon on the map, or a button below']},
+      sg:{name:'Singapore',tag:'Regional Tech Leader',items:['F-15SG fighters with self-protection electronic warfare suites — F-35s on order','Formidable-class frigates with modern electronic defences','Home-grown counter-drone and EW systems from DSO and ST Engineering']},
+      vn:{name:'Vietnam',tag:'Indigenous Ground & Coastal Jamming',items:['Viettel High Tech designs and builds its own radars and EW equipment','Mobile jammers for radar, GPS and radio signals','Main goal: protecting a very long coastline']},
+      thid:{name:'Thailand & Indonesia',tag:'Modern Fighter Self-Protection',items:['Thailand: Gripen fighters with built-in electronic warfare suites','Indonesia: Rafale jets arriving with the SPECTRA self-protection system','SPECTRA can detect threats and actively jam or fool enemy radar']},
+      phmy:{name:'Philippines & Malaysia',tag:'Building the Shield',items:['Expanding networks of coastal surveillance radars','Investing in jam-resistant maritime communications','Goal: resilience and awareness in the South China Sea']}};
+    const CAM={ov:[[0,22,17],[0,0,-1]],sg:[[sgp.x+3,11,sgp.z+12],[sgp.x,0,sgp.z-1]],vn:[[ll(106.5,13).x+5,9,ll(106.5,13).z+10],[ll(106.5,13).x,0,ll(106.5,13).z]],
+      thid:[[ll(106,4).x,14,ll(106,4).z+13],[ll(106,4).x,0,ll(106,4).z]],phmy:[[ll(116,8).x,14,ll(116,8).z+13],[ll(116,8).x,0,ll(116,8).z]]};
+    let sel='ov';
+    const s0=sec(P,'Select a country');
+    const ch=choice(s0,[{k:'ov',label:'Overview',cls:'ghost'},{k:'sg',label:'Singapore',sub:'Regional Tech Leader'},{k:'vn',label:'Vietnam',sub:'Ground & Coastal Jamming',cls:'red'},
+      {k:'thid',label:'Thailand & Indonesia',sub:'Fighter Self-Protection',cls:'amber'},{k:'phmy',label:'Philippines & Malaysia',sub:'Building the Shield',cls:'green'}],k=>select(k),{init:'ov'});
+    const card=h('div','card');P.appendChild(card);
+    function renderCard(){const i=INFO[sel];card.innerHTML=`<div class="ct">CAPABILITY HIGHLIGHTS</div><h3>${i.name}</h3><div class="tag">${i.tag}</div><ul>${i.items.map(x=>`<li>${x}</li>`).join('')}</ul>`;}
+    function select(k){if(!k)return;sel=k;ch.set(k);renderCard();fly(CAM[k][0],CAM[k][1]);}
+    renderCard();
+    const ray=new THREE.Raycaster(),mv=new THREE.Vector2();let down=null;const el=renderer.domElement;
+    const pickAt=e=>{const r=el.getBoundingClientRect();mv.set(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(mv,camera);const hit=ray.intersectObjects(pick,false)[0];return hit?hit.object.userData.key:null;};
+    const onDown=e=>{down=[e.clientX,e.clientY];};
+    const onUp=e=>{if(!down)return;const dx=e.clientX-down[0],dy=e.clientY-down[1];down=null;if(dx*dx+dy*dy>30)return;const key=pickAt(e);if(key)select(key);};
+    const onMove=e=>{if(down)return;el.style.cursor=pickAt(e)?'pointer':'';};
+    el.addEventListener('pointerdown',onDown);el.addEventListener('pointerup',onUp);el.addEventListener('pointermove',onMove);
+    const MINI=Object.entries(D);
+    return{
+      dispose(){el.removeEventListener('pointerdown',onDown);el.removeEventListener('pointerup',onUp);el.removeEventListener('pointermove',onMove);el.style.cursor='';},
+      update(dt,t){
+        ocean.userData.update(t);
+        meshes.forEach(o=>{const on=sel!=='ov'&&o.grp===sel;o.m.material.emissiveIntensity=damp(o.m.material.emissiveIntensity,on?.35+.1*Math.sin(t*3):(o.grp?.04:0),6,dt);
+          if(o.e)o.e.material.opacity=on?.9:(o.grp?.45:.25);});
+        beacons.forEach((b,i)=>{const on=sel==='ov'||b.key===sel;const kk=((t*.8)+i*.17)%1;b.ring.scale.setScalar(1+kk*2.2);b.ring.material.opacity=(1-kk)*(on?.9:.25);
+          b.b.material.opacity=on?.75:.2;b.top.material.opacity=on?.7+.3*Math.sin(t*4+i):.25;b.top.material.color.setHex(b.key===sel?COL.amber:COL.cyan);b.ring.material.color.setHex(b.key===sel?COL.amber:COL.cyan);});
+        icons.forEach((ic,i)=>{ic.o.rotation.y=t*.5+i;ic.o.position.y=ic.y+Math.sin(t*1.5+i)*.12;});
+      },
+      hud(g,t){
+        hudBg(g);const X=lo=>10+(lo-92)/(127-92)*292,Y=la=>214-(la+9)/(29+9)*200;
+        MINI.forEach(([id,pts])=>{const grp=GROUP[id],on=sel!=='ov'&&grp===sel;g.beginPath();pts.forEach(([lo,la],i)=>i?g.lineTo(X(lo),Y(la)):g.moveTo(X(lo),Y(la)));g.closePath();
+          g.fillStyle=on?'rgba(0,240,255,.45)':grp?'rgba(60,110,160,.4)':'rgba(60,75,95,.35)';g.fill();g.strokeStyle=on?HEX.cyan:'rgba(0,240,255,.25)';g.lineWidth=1;g.stroke();});
+        BEA.forEach(([id,lo,la],i)=>{const on=sel==='ov'||KEYOF[id]===sel;const kk=((t*.8)+i*.17)%1;g.strokeStyle=`rgba(${KEYOF[id]===sel?'255,170,0':'0,240,255'},${(1-kk)*(on?1:.3)})`;g.beginPath();g.arc(X(lo),Y(la),3+kk*10,0,TAU);g.stroke();
+          blip(g,X(lo),Y(la),on?1:.35,KEYOF[id]===sel?'255,170,0':'0,240,255',2.5);});
+        txt(g,INFO[sel].name.toUpperCase(),10,18,HEX.cyan,11,'left',800);txt(g,INFO[sel].tag.toUpperCase(),10,31,HEX.amber,8,'left',600);
+        txt(g,'CLICK THE MAP BEACONS',HW-8,HH-8,HEX.dim,8,'right',600);
+      }
+    };
+  }
+});
+
+/* ---------------- SLIDE 12 ---------------- */
+SLIDES.push({
+  title:'The Future: AI Cognitive Jamming & Key Takeaways',
+  sub:'Modern radios and radars hop between frequencies in a blink. Tomorrow’s jammers must learn and predict, not just react.',
+  analogy:'Signals change in a blink — now jammers have to think at the speed of light.',
+  time:'~1:00',hud:'FREQUENCY WATERFALL',cam:[[15,10,29],[0,4.5,5]],
+  notes:`<p><span class="cue">14:00</span>Finally, where is this heading? Modern radios and radars <b>hop</b> between frequencies many times a second to dodge jammers. <span class="act">[Legacy]</span> An old-style, pre-programmed jammer is always one step behind — by the time it arrives, the signal has already moved on.</p>
+<p><span class="act">[AI Cognitive]</span> A <b>cognitive</b> jammer uses AI to learn the hopping pattern on the fly, predict the next jump, and be there first. That is the next arms race: machine against machine, at the speed of light.</p>
+<p><span class="cue">14:40</span>Three things to remember: the fight starts in the invisible spectrum; Electronic Attack means jam, deceive or destroy; and our region is already living it. Thank you — I’m happy to take your questions.</p>`,
+  build({G,P,fx}){
+    G.add(makeFloor({color:0x0a0f1e}));
+    const LX=[-6,-3,0,3,6],LC=[COL.cyan,COL.green,COL.amber,COL.violet,0x4a7dff],LH=['#00f0ff','#00e676','#ffaa00','#b026ff','#4a7dff'];
+    const lanes=LX.map((x,i)=>{const m=M(new THREE.BoxGeometry(1.7,9,.25),glow(LC[i],.07),x,4.85,0);G.add(m);
+      const e=new THREE.LineSegments(new THREE.EdgesGeometry(m.geometry),new THREE.LineBasicMaterial({color:LC[i],transparent:true,opacity:.55}));e.position.copy(m.position);G.add(e);
+      const l=label('CH '+(i+1),LH[i],.4);l.position.set(x,.75,.9);G.add(l);return{m,e};});
+    const eLab=label('ENEMY FREQUENCY-HOPPING SIGNAL',HEX.cyan,.5);eLab.position.set(0,10.2,0);G.add(eLab);
+    const orb=M(new THREE.SphereGeometry(.42,20,14),new THREE.MeshBasicMaterial({color:0xffffff}));G.add(orb);const og=glowSprite(COL.cyan,3,.9);orb.add(og);
+    const pred=M(new THREE.TorusGeometry(.75,.04,8,32),glow(COL.violet,.9));G.add(pred);
+    const truck=makeTruck();truck.position.set(-1.8,.35,12);truck.rotation.y=PI;G.add(truck);
+    const trl=label('LEGACY JAMMER',HEX.red,.45);trl.position.set(-1.8,5.6,12);G.add(trl);
+    const core=new THREE.Group();core.position.set(2.6,4.2,12);G.add(core);
+    const ico=M(new THREE.IcosahedronGeometry(1.3,1),glow(COL.violet,.6,{wireframe:true}));core.add(ico);
+    const inner=M(new THREE.SphereGeometry(.65,20,14),glow(COL.violet,.6));core.add(inner);const cg=glowSprite(COL.violet,4,.6);core.add(cg);
+    const syn=[];for(let i=0;i<18;i++){const a=V(rand(-1,1),rand(-1,1),rand(-1,1)).normalize().multiplyScalar(1.25),b=V(rand(-1,1),rand(-1,1),rand(-1,1)).normalize().multiplyScalar(1.25);
+      const geo=new THREE.BufferGeometry().setFromPoints([a,b]);const ln=new THREE.Line(geo,new THREE.LineBasicMaterial({color:0xe2b0ff,transparent:true,opacity:.5,blending:THREE.AdditiveBlending}));core.add(ln);syn.push(ln);}
+    core.add(M(new THREE.CylinderGeometry(.15,.3,3.6,8),std(0x3a2a4a,{metalness:.6}),0,-2.3,0));
+    const cl=label('AI COGNITIVE JAMMER',HEX.violet,.45);cl.position.set(2.6,6.4,12);G.add(cl);
+    const beam=makeBeam(COL.red,.1,.75),beamC=makeBeam(0xffd0d8,.035,.9);G.add(beam);G.add(beamC);
+    const SEQ=[0,3,1,4,2,0,2,4,1,3,0,4],HOP=.8;
+    let mode='legacy',hopT=0,idx=0,em=SEQ[0],prev=SEQ[0],emY=5,emYT=5,emX=LX[em],jX=LX[em],jY=5,rowT=0,hitT=0;
+    const rows=[],samples=[];
+    const s0=sec(P,'Jammer type');
+    choice(s0,[{k:'legacy',label:'Legacy Pre-Programmed Jammer',sub:'Reacts after the signal moves',cls:'red'},{k:'ai',label:'AI Cognitive Jammer',sub:'Learns & predicts the next hop',cls:'violet'}],k=>{mode=k;samples.length=0;},{init:'legacy'});
+    const tk=h('div','card take');tk.innerHTML=`<div class="ct">KEY TAKEAWAYS</div><ol>
+      <li><b>The fight starts in the invisible spectrum</b> — radar, GPS and radio are targets before any shot is fired.</li>
+      <li><b>Electronic Attack has three tools:</b> jam (drown out), deceive (lie convincingly) and destroy (fry the electronics).</li>
+      <li><b>Southeast Asia is already living it</b> — from grey-zone jamming at sea to counter-drone shields at our airports.</li></ol>
+      <div class="qa">Q&amp;A — DISCUSSION OPEN</div>`;P.appendChild(tk);
+    return{
+      update(dt,t){
+        hopT+=dt;if(hopT>=HOP){hopT-=HOP;prev=em;idx=(idx+1)%SEQ.length;em=SEQ[idx];emYT=rand(2.8,7.2);}
+        emX=damp(emX,LX[em],28,dt);emY=damp(emY,emYT,28,dt);orb.position.set(emX,emY,.2);
+        const ai=mode==='ai';
+        if(ai){jX=damp(jX,LX[em],28,dt);jY=damp(jY,emYT,28,dt);}else{jX=damp(jX,LX[prev],5,dt);jY=damp(jY,5,3,dt);}
+        const nxt=SEQ[(idx+1)%SEQ.length];pred.visible=ai;pred.position.set(LX[nxt],emY,.3);pred.rotation.y=t*3;pred.material.opacity=.4+.5*(hopT/HOP);
+        const src=ai?core.position.clone():truck.userData.tipWorld();const tgt=V(jX,jY,0);beam.userData.set(src,tgt);beamC.userData.set(src,tgt);
+        beam.material.color.setHex(ai?COL.violet:COL.red);beam.material.opacity=.5+Math.random()*.3;
+        const hit=Math.abs(jX-emX)<.6&&Math.abs(jY-emY)<1.4;
+        orb.material.color.setHex(hit?COL.red:0xffffff);og.material.color.setHex(hit?COL.red:COL.cyan);
+        lanes.forEach((l,i)=>{const on=i===em;l.m.material.opacity=on?(hit?.22:.14):.05;l.e.material.opacity=on?.95:.4;});
+        hitT-=dt;if(hit&&hitT<=0){hitT=.18;fx.burst({pos:orb.position.clone(),color:COL.red,n:12,speed:3,size:.18,gravity:0,life:.5});}
+        ico.rotation.y=t*.6;ico.rotation.x=t*.3;inner.material.opacity=ai?.45+.3*Math.sin(t*10):.12;cg.material.opacity=ai?.6:.1;ico.material.opacity=ai?.7:.18;
+        syn.forEach((s,i)=>{s.material.opacity=ai?(Math.random()<.3?.95:.15):.05;});
+        truck.userData.tipGlow.material.opacity=ai?.15:.5+Math.random()*.4;
+        samples.push(hit?1:0);if(samples.length>240)samples.shift();
+        rowT-=dt;if(rowT<=0){rowT=.09;let jl=0,bd=99;LX.forEach((x,i)=>{const d=Math.abs(x-jX);if(d<bd){bd=d;jl=i;}});rows.unshift({em,jl,hit});if(rows.length>17)rows.pop();}
+      },
+      hud(g,t){
+        hudBg(g);const cw=50,x0=31,top=24,rh=9;
+        txt(g,'TIME ↓',6,top+8,HEX.dim,7.5,'left',600);
+        LH.forEach((c,i)=>txt(g,'CH'+(i+1),x0+i*cw+cw/2-2,18,c,8.5,'center',700));
+        rows.forEach((r,j)=>{const y=top+j*rh;for(let i=0;i<5;i++){const x=x0+i*cw;g.fillStyle='rgba(142,163,192,.06)';g.fillRect(x,y,cw-4,rh-2);
+          if(r.em===i&&r.jl===i){g.fillStyle='rgba(255,90,160,.95)';g.fillRect(x,y,cw-4,rh-2);}
+          else{if(r.em===i){g.fillStyle='rgba(0,240,255,.85)';g.fillRect(x,y,cw-4,rh-2);}if(r.jl===i){g.fillStyle='rgba(255,42,85,.6)';g.fillRect(x+4,y+2,cw-12,rh-6);}}}});
+        const y2=top+17*rh+12;
+        g.fillStyle='rgba(0,240,255,.85)';g.fillRect(10,y2-7,9,7);txt(g,'SIGNAL',23,y2,HEX.muted,8,'left',600);
+        g.fillStyle='rgba(255,42,85,.7)';g.fillRect(80,y2-7,9,7);txt(g,'JAMMER',93,y2,HEX.muted,8,'left',600);
+        g.fillStyle='rgba(255,90,160,.95)';g.fillRect(152,y2-7,9,7);txt(g,'HIT',165,y2,HEX.muted,8,'left',600);
+        const rate=samples.length?samples.reduce((a,b)=>a+b,0)/samples.length:0;
+        if(mode==='legacy')statusBar(g,`MISS RATE: HIGH (${Math.round((1-rate)*100)}%)`,HEX.red,t);
+        else statusBar(g,`ADAPTIVE LOCK: ${Math.min(99,Math.round(rate*100))}%`,HEX.green,t);
+      }
+    };
+  }
+});
+
+/* ============================================================
+   PRESENTATION SHELL
+   ============================================================ */
+const N=SLIDES.length,$=id=>document.getElementById(id),pad=n=>String(n).padStart(2,'0');
+const P=$('controls');
+let cur=-1,inst={},Gs=null,fxs=null;
+const cam={active:false,t:1,dur:1.8,from:V(),to:V(),tf:V(),tt:V()};
+function flyTo(pos,tgt,dur=1.8){cam.from.copy(camera.position);cam.to.set(...pos);cam.tf.copy(controls.target);cam.tt.set(...tgt);cam.t=0;cam.dur=dur;cam.active=true;}
+controls.addEventListener('start',()=>{cam.active=false;});
+
+const dotsEl=$('dots');
+SLIDES.forEach((S,i)=>{const d=h('button','dot',`<span class="tip"><b>${pad(i+1)}</b>${S.title}</span>`);d.setAttribute('aria-label','Slide '+(i+1)+': '+S.title);d.onclick=()=>go(i);dotsEl.appendChild(d);});
+
+function setHeader(S,i){
+  const hd=$('header');hd.classList.add('swap');
+  setTimeout(()=>{$('slideBadge').textContent=`SLIDE ${pad(i+1)} / ${pad(N)}`;$('timeBadge').textContent=S.time;$('title').textContent=S.title;
+    $('subtitle').textContent=S.sub;$('analogy').textContent=S.analogy?`“${S.analogy}”`:'';hd.classList.remove('swap');},180);
+}
+function go(i,instant=false){
+  i=clamp(i,0,N-1);if(i===cur)return;
+  if(Gs){try{inst.dispose&&inst.dispose();}catch(e){console.error(e);}fxs.destroy();scene.remove(Gs);disposeTree(Gs);}
+  cur=i;const S=SLIDES[i];
+  Gs=new THREE.Group();scene.add(Gs);fxs=new FX(Gs);P.innerHTML='';$('hudTitle').textContent=S.hud;
+  try{inst=S.build({G:Gs,P,fx:fxs,fly:flyTo})||{};}catch(e){console.error('Slide '+(i+1)+' failed to build',e);inst={};}
+  setHeader(S,i);
+  $('notesSlide').textContent=`${pad(i+1)} · ${S.title} · ${S.time}`;$('notesBody').innerHTML=S.notes;
+  [...dotsEl.children].forEach((d,k)=>{d.classList.toggle('cur',k===i);d.classList.toggle('done',k<i);});
+  $('prev').disabled=i===0;$('next').disabled=i===N-1;
+  if(instant){camera.position.set(...S.cam[0]);controls.target.set(...S.cam[1]);cam.active=false;}else flyTo(S.cam[0],S.cam[1],1.9);
+  $('panel').scrollTop=0;
+  try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+
+/* notes drawer */
+function toggleNotes(force){const n=$('notes'),open=force==null?!n.classList.contains('open'):force;n.classList.toggle('open',open);$('notesBtn').classList.toggle('on',open);}
+$('notesBtn').onclick=()=>toggleNotes();
+
+/* pacing timer */
+let tRun=false,tEl=0;
+const tElapsed=$('tElapsed'),tPlay=$('tPlay');
+function drawTimer(){const s=Math.floor(tEl);tElapsed.textContent=`${pad(Math.floor(s/60))}:${pad(s%60)}`;tElapsed.classList.toggle('warn',s>=780&&s<900);tElapsed.classList.toggle('over',s>=900);}
+tPlay.onclick=()=>{tRun=!tRun;tPlay.textContent=tRun?'❚❚':'▶';};
+$('tReset').onclick=()=>{tEl=0;drawTimer();};
+
+/* keyboard */
+addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  const t=e.target;if(t&&t.tagName==='INPUT'&&t.type==='range'&&(e.key==='ArrowLeft'||e.key==='ArrowRight'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='n'||e.key==='N'){toggleNotes();}
+  else if(e.key==='Home'){go(0);}else if(e.key==='End'){go(N-1);}
+  else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{});else document.exitFullscreen();}
+  else if(e.key==='t'||e.key==='T'){tPlay.click();}
+});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b)b.blur();});
+
+/* resize */
+/* shift the projection centre left so the 3D scene is framed in the space beside the control panel */
+function onResize(){const W=innerWidth,H=innerHeight,pw=Math.round(($('panel').getBoundingClientRect().width+18)*.9);renderer.setSize(W,H,false);
+  camera.aspect=(W+pw)/H;camera.setViewOffset(W+pw,H,pw,0,W,H);camera.updateProjectionMatrix();}
+addEventListener('resize',onResize);onResize();
+
+/* main loop */
+const clock=new THREE.Clock();let T=0;const stars=scene.getObjectByName('stars');
+function frame(){
+  requestAnimationFrame(frame);
+  const dt=Math.min(clock.getDelta(),.05);T+=dt;
+  if(tRun){const before=Math.floor(tEl);tEl+=dt;if(Math.floor(tEl)!==before)drawTimer();}
+  if(cam.active){cam.t+=dt/cam.dur;const k=ease(Math.min(cam.t,1));camera.position.lerpVectors(cam.from,cam.to,k);controls.target.lerpVectors(cam.tf,cam.tt,k);if(cam.t>=1)cam.active=false;}
+  try{fxs&&fxs.update(dt);inst.update&&inst.update(dt,T);}catch(e){console.error(e);inst.update=null;}
+  try{if(inst.hud){HG.save();inst.hud(HG,T);HG.restore();}}catch(e){console.error(e);inst.hud=null;}
+  stars.rotation.y+=dt*.004;
+  controls.update();renderer.render(scene,camera);
+}
+const start=parseInt((location.hash||'').slice(1),10);
+go(isNaN(start)?0:start-1,true);drawTimer();
+frame();
+})();
+</script>
+</body>
+</html>
