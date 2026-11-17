@@ -125,6 +125,47 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   .note{font-size:12px;padding:7px 10px}
   #notes{right:362px}
 }
+
+/* ---------- phone layout: compact title, tabbed bottom sheet ---------- */
+#mbody{display:flex;flex-direction:column;gap:12px}
+#mtabs,#mtitle,#mcount{display:none}
+@media (max-width:760px),(max-height:500px){
+  #hint,#dots,#timer,.sep,#notesBtn{display:none!important}
+  #mtitle{display:flex;position:fixed;top:10px;left:10px;right:10px;z-index:6;align-items:center;gap:8px;padding:8px 12px;font-size:13.5px;font-weight:700;white-space:nowrap;overflow:hidden}
+  #mtitle .badge{flex:none;font-size:10px;padding:3px 7px}
+  #mtitle .tt{overflow:hidden;text-overflow:ellipsis}
+  #nav{left:8px;right:8px;bottom:8px;transform:none;justify-content:space-between;padding:6px 8px;max-width:none}
+  #mcount{display:block;font:700 13px var(--mono);color:var(--cyan);letter-spacing:.08em}
+  .navbtn{padding:10px 18px;font-size:14px}
+  #panel{top:auto;left:8px;right:8px;bottom:68px;width:auto;height:min(50vh,470px);padding:0;gap:0;overflow:hidden;transition:height .3s ease}
+  #panel.collapsed{height:48px}
+  #mtabs{display:flex;flex:none;gap:4px;padding:6px;border-bottom:1px solid var(--edge)}
+  #mtabs button{flex:1;font:600 13.5px var(--sans);color:var(--muted);background:transparent;border:0;border-radius:8px;padding:8px 4px;cursor:pointer}
+  #mtabs button.on{color:#050811;background:var(--cyan)}
+  #mtabs #mcollapse{flex:0 0 44px;font-size:16px;color:var(--text);background:rgba(255,255,255,.05)}
+  #mbody{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+  #panel.collapsed #mbody{display:none}
+  #panel:not(.t-info) #header{display:none}
+  #panel:not(.t-hud) .hudbox,#panel:not(.t-ctl) #controls{display:none}
+  #panel.t-hud .hudbox{max-width:420px;margin:0 auto;width:100%}
+  #panel:not(.t-notes) #notes{display:none}
+  #header{position:static;width:auto;padding:2px 2px 0;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+  #header .badge.live{display:none}
+  #title{font-size:21px}
+  #subtitle{font-size:14.5px}
+  #analogy{font-size:14px}
+  #notes{position:static;transform:none;opacity:1;max-height:none;padding:2px;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;overflow:visible}
+  #notes .nhead .k{display:none}
+  #notesBody{font-size:15px}
+  .btn{padding:11px 13px;font-size:14px}
+  .btn small{font-size:12px}
+  .note{font-size:13.5px}
+}
+@media (max-height:500px) and (orientation:landscape){
+  #panel{top:10px;bottom:64px;left:auto;right:8px;width:min(46vw,380px);height:auto}
+  #panel.collapsed{top:auto;height:48px}
+  #mtitle{right:calc(min(46vw,380px) + 20px)}
+}
 </style>
 </head>
 <body>
@@ -137,12 +178,16 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
   <div id="analogy"></div>
 </header>
 
-<aside id="panel" class="glass">
+<div id="mtitle" class="glass"></div>
+<aside id="panel" class="glass t-info">
+  <div id="mtabs"><button data-t="info">Slide</button><button data-t="ctl">Controls</button><button data-t="hud">Scope</button><button data-t="notes">Notes</button><button id="mcollapse" title="Hide / show panel">▾</button></div>
+  <div id="mbody">
   <div class="hudbox">
     <div class="hudtitle"><span id="hudTitle">HUD</span><span>SIMULATED</span></div>
     <canvas id="hud" width="624" height="460"></canvas>
   </div>
   <div id="controls"></div>
+  </div>
 </aside>
 
 <section id="notes" class="glass" aria-label="Speaker notes">
@@ -153,6 +198,7 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 <nav id="nav" class="glass">
   <button class="navbtn" id="prev" title="Previous (←)">◀ Prev</button>
   <div id="dots"></div>
+  <div id="mcount"></div>
   <button class="navbtn" id="next" title="Next (→ / Space)">Next ▶</button>
   <div class="sep"></div>
   <div id="timer">
@@ -1763,7 +1809,11 @@ const N=SLIDES.length,$=id=>document.getElementById(id),pad=n=>String(n).padStar
 const P=$('controls');
 let cur=-1,inst={},Gs=null,fxs=null;
 const cam={active:false,t:1,dur:1.8,from:V(),to:V(),tf:V(),tt:V()};
-function flyTo(pos,tgt,dur=1.8){cam.from.copy(camera.position);cam.to.set(...pos);cam.tf.copy(controls.target);cam.tt.set(...tgt);cam.t=0;cam.dur=dur;cam.active=true;}
+const mq=matchMedia('(max-width:760px),(max-height:500px)');
+const portrait=()=>mq.matches&&innerWidth<=innerHeight;
+/* on tall phone screens, pull the camera back so wide scenes still fit */
+function fit(pos,tgt){const k=portrait()?clamp(Math.sqrt(1.5/camera.aspect)*.98,1,2.3):1;return pos.map((v,i)=>tgt[i]+(v-tgt[i])*k);}
+function flyTo(pos,tgt,dur=1.8){pos=fit(pos,tgt);cam.from.copy(camera.position);cam.to.set(...pos);cam.tf.copy(controls.target);cam.tt.set(...tgt);cam.t=0;cam.dur=dur;cam.active=true;}
 controls.addEventListener('start',()=>{cam.active=false;});
 
 const dotsEl=$('dots');
@@ -1773,6 +1823,7 @@ function setHeader(S,i){
   const hd=$('header');hd.classList.add('swap');
   setTimeout(()=>{$('slideBadge').textContent=`SLIDE ${pad(i+1)} / ${pad(N)}`;$('timeBadge').textContent=S.time;$('title').textContent=S.title;
     $('subtitle').textContent=S.sub;$('analogy').textContent=S.analogy?`“${S.analogy}”`:'';hd.classList.remove('swap');},180);
+  $('mtitle').innerHTML=`<span class="badge">${pad(i+1)}/${pad(N)}</span><span class="tt">${S.title}</span>`;$('mcount').textContent=`${pad(i+1)} / ${pad(N)}`;
 }
 function go(i,instant=false){
   i=clamp(i,0,N-1);if(i===cur)return;
@@ -1784,14 +1835,14 @@ function go(i,instant=false){
   $('notesSlide').textContent=`${pad(i+1)} · ${S.title} · ${S.time}`;$('notesBody').innerHTML=S.notes;
   [...dotsEl.children].forEach((d,k)=>{d.classList.toggle('cur',k===i);d.classList.toggle('done',k<i);});
   $('prev').disabled=i===0;$('next').disabled=i===N-1;
-  if(instant){camera.position.set(...S.cam[0]);controls.target.set(...S.cam[1]);cam.active=false;}else flyTo(S.cam[0],S.cam[1],1.9);
-  $('panel').scrollTop=0;
+  if(instant){camera.position.set(...fit(S.cam[0],S.cam[1]));controls.target.set(...S.cam[1]);cam.active=false;}else flyTo(S.cam[0],S.cam[1],1.9);
+  $('panel').scrollTop=0;$('mbody').scrollTop=0;
   try{history.replaceState(null,'','#'+(i+1));}catch(e){}
 }
 $('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
 
 /* notes drawer */
-function toggleNotes(force){const n=$('notes'),open=force==null?!n.classList.contains('open'):force;n.classList.toggle('open',open);$('notesBtn').classList.toggle('on',open);}
+function toggleNotes(force){if(mq.matches){setTab(mTab==='notes'?'ctl':'notes');return;}const n=$('notes'),open=force==null?!n.classList.contains('open'):force;n.classList.toggle('open',open);$('notesBtn').classList.toggle('on',open);}
 $('notesBtn').onclick=()=>toggleNotes();
 
 /* pacing timer */
@@ -1816,8 +1867,20 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 
 /* resize */
 /* shift the projection centre left so the 3D scene is framed in the space beside the control panel */
-function onResize(){const W=innerWidth,H=innerHeight,pw=Math.round(($('panel').getBoundingClientRect().width+18)*.9);renderer.setSize(W,H,false);
-  camera.aspect=(W+pw)/H;camera.setViewOffset(W+pw,H,pw,0,W,H);camera.updateProjectionMatrix();}
+function onResize(){const W=innerWidth,H=innerHeight,r=$('panel').getBoundingClientRect();renderer.setSize(W,H,false);
+  if(portrait()){const sh=Math.max(0,Math.round((H-r.top)*.8));camera.fov=58;camera.aspect=W/(H+sh);camera.setViewOffset(W,H+sh,0,sh,W,H);}
+  else{const pw=Math.round((r.width+18)*.9);camera.fov=48;camera.aspect=(W+pw)/H;camera.setViewOffset(W+pw,H,pw,0,W,H);}
+  camera.updateProjectionMatrix();}
+/* phone tabs */
+let mTab='info';
+function setTab(t){mTab=t;const p=$('panel');p.classList.remove('t-info','t-ctl','t-hud','t-notes','collapsed');p.classList.add('t-'+t);$('mcollapse').textContent='▾';
+  document.querySelectorAll('#mtabs [data-t]').forEach(b=>b.classList.toggle('on',b.dataset.t===t));$('mbody').scrollTop=0;setTimeout(onResize,330);}
+document.querySelectorAll('#mtabs [data-t]').forEach(b=>b.onclick=()=>setTab(b.dataset.t));
+$('mcollapse').onclick=()=>{const p=$('panel'),c=p.classList.toggle('collapsed');$('mcollapse').textContent=c?'▴':'▾';setTimeout(onResize,330);};
+function applyMode(){const mb=$('mbody');if(mq.matches){mb.prepend($('header'));mb.appendChild($('notes'));}
+  else{document.body.insertBefore($('header'),$('panel'));document.body.insertBefore($('notes'),$('nav'));}setTab(mTab);onResize();if(cur>=0)flyTo(SLIDES[cur].cam[0],SLIDES[cur].cam[1],1);}
+mq.addEventListener?mq.addEventListener('change',applyMode):mq.addListener(applyMode);
+applyMode();
 addEventListener('resize',onResize);onResize();
 
 /* main loop */
